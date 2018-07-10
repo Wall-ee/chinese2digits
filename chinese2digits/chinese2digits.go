@@ -185,7 +185,14 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 			if err != nil {
 				panic(err)
 			} else {
-				finalTotal = strconv.FormatFloat(floatResult/100, 'f', -1, 32)
+				//看小数点后面有几位
+				convertResultDotSplitList := strings.Split(convertResult, ".")
+				if len(convertResultDotSplitList) > 1{
+					rightOfConvertResultDotString := string(convertResultDotSplitList[1])
+					finalTotal = strconv.FormatFloat(floatResult/100, 'f', (len(rightOfConvertResultDotString) + 2), 32)
+				}else{
+					finalTotal = strconv.FormatFloat(floatResult/100, 'f', 2, 32)
+				}
 			}
 		} else {
 			finalTotal = convertResult
@@ -268,30 +275,32 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 		//"""
 		//不是字符是不是"百分之"。
 		//"""
-		if string(chText[i:(i+3)]) == chinesePercentString {
-			//"""
-			//如果 百分之前面有数字  则 存到结果里面
-			//"""
-			if tempCHNumberChar != "" {
-				CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-				tempCHPercentChar = ""
-				tempCHConnectChar = ""
-				tempCHSignChar = ""
-				tempCHNumberChar = ""
-				tempTotalChar = ""
-			}
-			//"""
-			//如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
-			//"""
-			if tempCHPercentChar != "" {
-				tempTotalChar = strings.Replace(tempTotalChar, tempCHPercentChar, "", -1)
-			}
+		if (len(chText) - i) >= 3 {
+			if string(chText[i:(i+3)]) == chinesePercentString {
+				//"""
+				//如果 百分之前面有数字  则 存到结果里面
+				//"""
+				if tempCHNumberChar != "" {
+					CHNumberStringList = append(CHNumberStringList, tempTotalChar)
+					tempCHPercentChar = ""
+					tempCHConnectChar = ""
+					tempCHSignChar = ""
+					tempCHNumberChar = ""
+					tempTotalChar = ""
+				}
+				//"""
+				//如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
+				//"""
+				if tempCHPercentChar != "" {
+					tempTotalChar = strings.Replace(tempTotalChar, tempCHPercentChar, "", -1)
+				}
 
-			tempCHPercentChar = string(chText[i:(i + 3)])
-			tempTotalChar = tempTotalChar + tempCHPercentChar
-			i = i + 2 //下次循环会默认加+1 所以要小心 +2
-			continue
+				tempCHPercentChar = string(chText[i:(i + 3)])
+				tempTotalChar = tempTotalChar + tempCHPercentChar
+				i = i + 2 //下次循环会默认加+1 所以要小心 +2
+				continue
 
+			}
 		}
 
 		//"""
