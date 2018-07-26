@@ -25,6 +25,26 @@ var chinesePercentString = "百分之"
 var chineseSignDict = map[string]string{"负": "-", "正": "+", "-": "-", "+": "+"}
 var chineseConnectingSignDict = map[string]string{".": ".", "点": ".", "·": "."}
 
+var chinesePureNumberList = map[string]int{"幺": 1, "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
+
+func checkChineseNumberReasonable(chNumber string) bool{
+	chineseChars := []rune(chNumber)
+	if len(chNumber)>0 {
+		//如果汉字长度大于0 则判断是不是 万  千  单字这种
+		for i:=0;i<len(chineseChars);i++{
+			charToGet := string(chineseChars[i])
+			_, exists := chinesePureNumberList[charToGet]
+			if exists {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+
+
+
 // CoreCHToDigits 是核心转化函数
 func CoreCHToDigits(chineseCharsToTrans string, simpilfy interface{}) string {
 	chineseChars := []rune(chineseCharsToTrans)
@@ -253,12 +273,21 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 			//如果 符号前面有数字  则 存到结果里面
 			//"""
 			if tempCHNumberChar != "" {
-				CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-				tempCHPercentChar = ""
-				tempCHConnectChar = ""
-				tempCHSignChar = ""
-				tempCHNumberChar = ""
-				tempTotalChar = ""
+				if checkChineseNumberReasonable(tempTotalChar){
+					CHNumberStringList = append(CHNumberStringList, tempTotalChar)
+					tempCHPercentChar = ""
+					tempCHConnectChar = ""
+					tempCHSignChar = ""
+					tempCHNumberChar = ""
+					tempTotalChar = ""
+				}else{
+					tempCHPercentChar = ""
+					tempCHConnectChar = ""
+					tempCHSignChar = ""
+					tempCHNumberChar = ""
+					tempTotalChar = ""
+				}
+
 			}
 			//"""
 			//如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
@@ -281,12 +310,20 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 				//如果 百分之前面有数字  则 存到结果里面
 				//"""
 				if tempCHNumberChar != "" {
-					CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-					tempCHPercentChar = ""
-					tempCHConnectChar = ""
-					tempCHSignChar = ""
-					tempCHNumberChar = ""
-					tempTotalChar = ""
+					if checkChineseNumberReasonable(tempTotalChar) {
+						CHNumberStringList = append(CHNumberStringList, tempTotalChar)
+						tempCHPercentChar = ""
+						tempCHConnectChar = ""
+						tempCHSignChar = ""
+						tempCHNumberChar = ""
+						tempTotalChar = ""
+					}else{
+						tempCHPercentChar = ""
+						tempCHConnectChar = ""
+						tempCHSignChar = ""
+						tempCHNumberChar = ""
+						tempTotalChar = ""
+					}
 				}
 				//"""
 				//如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
@@ -339,12 +376,20 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 			//遇到第一个在字典里找不到的，且最终长度大于符号与连接符的。所有临时记录清空, 最终字符串被记录
 			//""
 			if len(tempTotalChar) > len(tempCHPercentChar+tempCHConnectChar+tempCHSignChar) {
-				CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-				tempCHPercentChar = ""
-				tempCHConnectChar = ""
-				tempCHSignChar = ""
-				tempCHNumberChar = ""
-				tempTotalChar = ""
+				if checkChineseNumberReasonable(tempTotalChar) {
+					CHNumberStringList = append(CHNumberStringList, tempTotalChar)
+					tempCHPercentChar = ""
+					tempCHConnectChar = ""
+					tempCHSignChar = ""
+					tempCHNumberChar = ""
+					tempTotalChar = ""
+				}else{
+					tempCHPercentChar = ""
+					tempCHConnectChar = ""
+					tempCHSignChar = ""
+					tempCHNumberChar = ""
+					tempTotalChar = ""
+				}
 			}
 
 			//"
@@ -357,12 +402,20 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 	//将temp 清干净
 	//"""
 	if len(tempTotalChar) > len(tempCHPercentChar+tempCHConnectChar+tempCHSignChar) {
-		CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-		tempCHPercentChar = ""
-		tempCHConnectChar = ""
-		tempCHSignChar = ""
-		tempCHNumberChar = ""
-		tempTotalChar = ""
+		if checkChineseNumberReasonable(tempTotalChar) {
+			CHNumberStringList = append(CHNumberStringList, tempTotalChar)
+			tempCHPercentChar = ""
+			tempCHConnectChar = ""
+			tempCHSignChar = ""
+			tempCHNumberChar = ""
+			tempTotalChar = ""
+		}else{
+			tempCHPercentChar = ""
+			tempCHConnectChar = ""
+			tempCHSignChar = ""
+			tempCHNumberChar = ""
+			tempTotalChar = ""
+		}
 	}
 	//"""
 	//将中文转换为数字
