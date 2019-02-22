@@ -18,6 +18,8 @@ map[inputText:负百分之点二八你好啊百分之三五是不是点伍零百
 
 ```
 
+## Go 语言代码示例
+## GoLang Example
 
 ``` go
 package main
@@ -35,9 +37,32 @@ func main() {
 
 ```
 
-> 需要Python 或 JavaScript 源代码  可以给我发站内信。  好用记得Fork and Star。
+## Pyhon 语言代码示例
+## Pyhon Example
+
+
+``` python
+
+import chinese2digits as c2d
+
+#将百分比转为小数
+print(c2d.takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
+
+#使用正则表达式
+print(c2d.takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八'))
+
+#使用普通顺序逻辑引擎
+print(c2d.takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八',method='normal'))
+
+```
+
+
+
+
+
+> 好用记得Fork and Star。
 >
-> If you need the code in Python and JavaScript,just send me message, fork and star~~
+> If you need the code in JavaScript,just send me message, fork and star~~
 
 
 
