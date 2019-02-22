@@ -58,13 +58,13 @@ print(c2d.takeChineseNumberFromString('负百分之点二八你好啊百分之�
 
 
 
-
-
 > 好用记得Fork and Star。
 >
 > If you need the code in JavaScript,just send me message, fork and star~~
 
 
 
+## License
+chinese2digits is licensed under the Apache License 2.0.
 
 
