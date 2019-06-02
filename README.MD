@@ -40,7 +40,15 @@ func main() {
 ## Pyhon 语言代码示例
 ## Pyhon Example
 
+### 安装
+### setup
 
+``` python
+pip install chinese2digits
+```
+
+### 使用
+### usage
 ``` python
 
 import chinese2digits as c2d
