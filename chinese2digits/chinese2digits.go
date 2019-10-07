@@ -27,11 +27,11 @@ var chineseConnectingSignDict = map[string]string{".": ".", "点": ".", "·": ".
 
 var chinesePureNumberList = map[string]int{"幺": 1, "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
 
-func checkChineseNumberReasonable(chNumber string) bool{
+func checkChineseNumberReasonable(chNumber string) bool {
 	chineseChars := []rune(chNumber)
-	if len(chNumber)>0 {
+	if len(chNumber) > 0 {
 		//如果汉字长度大于0 则判断是不是 万  千  单字这种
-		for i:=0;i<len(chineseChars);i++{
+		for i := 0; i < len(chineseChars); i++ {
 			charToGet := string(chineseChars[i])
 			_, exists := chinesePureNumberList[charToGet]
 			if exists {
@@ -42,8 +42,21 @@ func checkChineseNumberReasonable(chNumber string) bool{
 	return false
 }
 
+//找到数组最大值
+func maxValueInArray(arrayToCalc []int) int {
+	//获取一个数组里最大值，并且拿到下标
 
+	//假设第一个元素是最大值，下标为0
+	maxVal := arrayToCalc[0]
 
+	for i := 1; i < len(arrayToCalc); i++ {
+		//从第二个 元素开始循环比较，如果发现有更大的，则交换
+		if maxVal < arrayToCalc[i] {
+			maxVal = arrayToCalc[i]
+		}
+	}
+	return maxVal
+}
 
 // CoreCHToDigits 是核心转化函数
 func CoreCHToDigits(chineseCharsToTrans string, simpilfy interface{}) string {
@@ -83,27 +96,34 @@ func CoreCHToDigits(chineseCharsToTrans string, simpilfy interface{}) string {
 
 	if simpilfySign == false {
 		tempTotal := 0
-		r := 1
+		countingUnit := 1
+		countingUnitFromString := []int{1}
 		// 表示单位：个十百千...
 		for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
 			charToGet := string(chineseChars[i])
 			val, _ := chineseCharNumberDict[charToGet]
 			if (val >= 10) && (i == 0) {
 				// 应对 十三 十四 十*之类
-				if val > r {
-					r = val
+				if val > countingUnit {
+					countingUnit = val
 					tempTotal = tempTotal + val
+					countingUnitFromString = append(countingUnitFromString, val)
 				} else {
-					r = r * val
+					countingUnitFromString = append(countingUnitFromString, val)
+					// countingUnit = countingUnit * val
+					countingUnit = maxValueInArray(countingUnitFromString) * val
 				}
 			} else if val >= 10 {
-				if val > r {
-					r = val
+				if val > countingUnit {
+					countingUnit = val
+					countingUnitFromString = append(countingUnitFromString, val)
 				} else {
-					r = r * val
+					// countingUnit = countingUnit * val
+					countingUnitFromString = append(countingUnitFromString, val)
+					countingUnit = maxValueInArray(countingUnitFromString) * val
 				}
 			} else {
-				tempTotal = tempTotal + r*val
+				tempTotal = tempTotal + countingUnit*val
 			}
 		}
 		// 转化为字符串
@@ -207,10 +227,10 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 			} else {
 				//看小数点后面有几位
 				convertResultDotSplitList := strings.Split(convertResult, ".")
-				if len(convertResultDotSplitList) > 1{
+				if len(convertResultDotSplitList) > 1 {
 					rightOfConvertResultDotString := string(convertResultDotSplitList[1])
 					finalTotal = strconv.FormatFloat(floatResult/100, 'f', (len(rightOfConvertResultDotString) + 2), 32)
-				}else{
+				} else {
 					finalTotal = strconv.FormatFloat(floatResult/100, 'f', 2, 32)
 				}
 			}
@@ -273,14 +293,14 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 			//如果 符号前面有数字  则 存到结果里面
 			//"""
 			if tempCHNumberChar != "" {
-				if checkChineseNumberReasonable(tempTotalChar){
+				if checkChineseNumberReasonable(tempTotalChar) {
 					CHNumberStringList = append(CHNumberStringList, tempTotalChar)
 					tempCHPercentChar = ""
 					tempCHConnectChar = ""
 					tempCHSignChar = ""
 					tempCHNumberChar = ""
 					tempTotalChar = ""
-				}else{
+				} else {
 					tempCHPercentChar = ""
 					tempCHConnectChar = ""
 					tempCHSignChar = ""
@@ -317,7 +337,7 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 						tempCHSignChar = ""
 						tempCHNumberChar = ""
 						tempTotalChar = ""
-					}else{
+					} else {
 						tempCHPercentChar = ""
 						tempCHConnectChar = ""
 						tempCHSignChar = ""
@@ -383,7 +403,7 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 					tempCHSignChar = ""
 					tempCHNumberChar = ""
 					tempTotalChar = ""
-				}else{
+				} else {
 					tempCHPercentChar = ""
 					tempCHConnectChar = ""
 					tempCHSignChar = ""
@@ -409,7 +429,7 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 			tempCHSignChar = ""
 			tempCHNumberChar = ""
 			tempTotalChar = ""
-		}else{
+		} else {
 			tempCHPercentChar = ""
 			tempCHConnectChar = ""
 			tempCHSignChar = ""

@@ -34,23 +34,33 @@ def coreCHToDigits(chineseChars,simpilfy=None,resultType='string'):
 
     if simpilfy is False:
         total = 0
-        r = 1              #表示单位：个十百千...
+        countingUnit = 1              #表示单位：个十百千,用以计算单位相乘 例如八百万 百万是相乘的方法，但是如果万前面有 了一千八百万 这种，千和百不能相乘，要相加...
+        countingUnitFromString = [1]                            #原始字符串提取的单位应该是一个list  在计算的时候，新的单位应该是本次取得的数字乘以已经发现的最大单位，例如 4千三百五十万， 等于 4000万+300万+50万
         for i in range(len(chineseChars) - 1, -1, -1):
             val = common_used_ch_numerals.get(chineseChars[i])
-            if val >= 10 and i == 0:  #应对 十三 十四 十*之类
-                if val > r:
-                    r = val
-                    total = total + val
+            if val >= 10 and i == 0:  #应对 十三 十四 十*之类，说明为十以上的数字，看是不是十三这种
+                #取最近一次的单位
+                if val > countingUnit:  #如果val大于 contingUnit 说明 是以一个更大的单位开头 例如 十三 千二这种
+                    countingUnit = val   #赋值新的计数单位
+                    total = total + val    #总值等于  全部值加上新的单位 类似于13 这种
+                    countingUnitFromString.append(val)
                 else:
-                    r = r * val
+                    countingUnitFromString.append(val)
+                    # 计算用的单位是最新的单位乘以字符串中最大的原始单位
+                    # countingUnit = countingUnit * val
+                    countingUnit = max(countingUnitFromString) * val
                     #total =total + r * x
             elif val >= 10:
-                if val > r:
-                    r = val
+                if val > countingUnit:
+                    countingUnit = val
+                    countingUnitFromString.append(val)
                 else:
-                    r = r * val
+                    countingUnitFromString.append(val)
+                    # 计算用的单位是最新的单位乘以字符串中最大的原始单位
+                    # countingUnit = countingUnit * val
+                    countingUnit = max(countingUnitFromString) * val
             else:
-                total = total + r * val
+                total = total + countingUnit * val
         total = str(total)
     else:
         total=''
@@ -376,6 +386,7 @@ if __name__=='__main__':
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
-    print(takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八'))
+    print(takeChineseNumberFromString('一千八百万'))
+    print(takeChineseNumberFromString('五亿七千万'))
     #使用普通顺序逻辑引擎
-    print(takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八',method='normal'))
+    print(takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八',method='normal'))
