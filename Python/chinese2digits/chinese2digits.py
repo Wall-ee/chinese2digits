@@ -12,6 +12,13 @@ CHINESE_SIGN_DICT = {'负':'-','正':'+','-':'-','+':'+'}
 CHINESE_PERCENT_DICT = {'百分之':'%'}
 CHINESE_CONNECTING_SIGN_DICT = {'.':'.','点':'.','·':'.'}
 CHINESE_COUNTING_STRING = {'十':10, '百':100, '千':1000, '万':10000, '亿':100000000}
+CHINESE_PURE_COUNTING_UNIT_LIST = list(CHINESE_COUNTING_STRING.keys())
+
+TRADITIONAl_CONVERT_DICT = {'壹': '一', '贰': '二', '叁': '三', '肆': '四', '伍': '五', '陆': '六', '柒': '七',
+                           '捌': '八', '玖': '九'}
+SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT = {'拾': '十', '佰': '百', '仟':'千', '萬':'万', '億':'亿'}
+
+SPECIAL_NUMBER_CHAR_DICT = {'两':'二','俩':'二'}
 
 """
 中文转阿拉伯数字
@@ -162,6 +169,78 @@ def checkChineseNumberReasonable(chNumber):
                 return True
     return False
 
+"""
+繁体简体转换 及  单位  特殊字符转换 两千变二千
+"""
+def traditionalTextConvertFunc(chString,simplifConvertSwitch=True):
+    chStringList = list(chString)
+    stringLength = len(list(chStringList))
+
+    if simplifConvertSwitch == True:
+        for i in range(stringLength):
+            #繁体中文数字转简体中文数字
+            if TRADITIONAl_CONVERT_DICT.get(chStringList[i],'') != '':
+                chStringList[i] = TRADITIONAl_CONVERT_DICT.get(chStringList[i],'')
+
+    #检查繁体单体转换
+    for i in range(stringLength):
+        #如果 前后有 pure 汉字数字 则转换单位为简体
+        if SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i],'') != '':
+            # 如果前后有单纯的数字 则进行单位转换
+            if i == 0:
+                if chStringList[i+1] in CHINESE_PURE_NUMBER_LIST:
+                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
+            elif i == stringLength-1:
+                if chStringList[i-1] in CHINESE_PURE_NUMBER_LIST:
+                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
+            else:
+                if chStringList[i-1] in CHINESE_PURE_NUMBER_LIST or \
+                        chStringList[i+1] in CHINESE_PURE_NUMBER_LIST :
+                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
+        #特殊变换 俩变二
+        if SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '') != '':
+            # 如果前后有单位 则进行转换
+            if i == 0:
+                if chStringList[i+1] in CHINESE_PURE_COUNTING_UNIT_LIST:
+                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
+            elif i == stringLength-1:
+                if chStringList[i-1] in CHINESE_PURE_COUNTING_UNIT_LIST:
+                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
+            else:
+                if chStringList[i-1] in CHINESE_PURE_COUNTING_UNIT_LIST or \
+                        chStringList[i+1] in CHINESE_PURE_COUNTING_UNIT_LIST :
+                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
+    return ''.join(chStringList)
+
+"""
+标准表述转换  三千二 变成 三千零二  三千十二变成 三千零一十二
+"""
+def standardChNumberConvert(chNumberString):
+    chNumberStringList = list(chNumberString)
+    #十位补一：
+    for i in range(len(chNumberStringList)):
+        if chNumberStringList[i] == '十':
+            if i == 0 :
+                chNumberStringList.insert(i,'一')
+            else:
+                #如果没有左边计数数字 插入1
+                if chNumberStringList[i-1] in CHINESE_PURE_NUMBER_LIST:
+                    chNumberStringList.insert(i,'一')
+
+    #差位补零
+    #逻辑 如果最后一个单位 不是十结尾 而是百以上 则数字后面补一个比最后一个出现的单位小一级的单位
+    lastCountingUnit = 0
+    for i in range(len(chNumberStringList)-1, -1, -1):
+        if chNumberStringList[i] == '十':
+            if i == 0 :
+                chNumberStringList.insert(i,'一')
+            else:
+                #如果没有左边计数数字 插入1
+                if chNumberStringList[i-1] in CHINESE_PURE_NUMBER_LIST:
+                    chNumberStringList.insert(i,'一')
+
+
+
 #以百分号作为大逻辑区分。 是否以百分号作为新的数字切割逻辑 所以同一套切割逻辑要有  或关系   有百分之结尾 或者  没有百分之结尾
 takingChineseNumberRERules = re.compile('(?:(?:(?:百分之){0,1}[正负]{0,1})|(?:[正负]{0,1}(?:百分之){0,1}))'
                                         '(?:(?:[一二三四五六七八九十千万亿兆幺零(?:百(?!分之))]+(?:点[一二三四五六七八九幺零]+){0,1})'
@@ -170,10 +249,24 @@ takingChineseNumberRERules = re.compile('(?:(?:(?:百分之){0,1}[正负]{0,1})|
                                         '(?:(?:[一二三四五六七八九十千万亿兆幺零(?:百(?!分之))]+(?:点[一二三四五六七八九幺零]+){0,1})'
                                         '|(?:(?:[一二三四五六七八九十千万亿兆幺零(?:百(?!分之))]+){0,1}点[一二三四五六七八九幺零]+))')
 
-def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex'):
-
+def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',simplifConvert= True):
+    """
+    :param chText: chinese string
+    :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
+    :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
+    :param method: chinese number string cut engine. Default is regex. Other means cut using python code logic only
+    :param simplifConvert: Switch to convert the Traditional Chinese character to Simplified chinese
+    :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
+    """
 
     """
+    简体转换开关
+    """
+
+    chText = traditionalTextConvertFunc(chText,simplifConvert)
+
+    """
+    字符串 汉字数字字符串切割提取
     正则表达式方法
     """
     if method == 'regex':
@@ -330,6 +423,11 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
 
 
     """
+    进行标准汉字字符串转换 例如 二千二  转换成二千零二
+    """
+    CHNumberStringListTemp = CHNumberStringList
+
+    """
     将中文转换为数字
     """
     digitsStringList = []
@@ -386,7 +484,7 @@ if __name__=='__main__':
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
-    print(takeChineseNumberFromString('一千八百万'))
+    print(takeChineseNumberFromString('三亿二千一十七'))
     print(takeChineseNumberFromString('五亿七千万'))
     #使用普通顺序逻辑引擎
     print(takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八',method='normal'))
