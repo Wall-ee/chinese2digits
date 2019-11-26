@@ -12,7 +12,7 @@ CHINESE_SIGN_DICT = {'负':'-','正':'+','-':'-','+':'+'}
 CHINESE_PERCENT_DICT = {'百分之':'%'}
 CHINESE_CONNECTING_SIGN_DICT = {'.':'.','点':'.','·':'.'}
 CHINESE_COUNTING_STRING = {'十':10, '百':100, '千':1000, '万':10000, '亿':100000000}
-CHINESE_PURE_COUNTING_UNIT_LIST = list(CHINESE_COUNTING_STRING.keys())
+CHINESE_PURE_COUNTING_UNIT_LIST = ['十','百','千','万','亿']
 
 TRADITIONAl_CONVERT_DICT = {'壹': '一', '贰': '二', '叁': '三', '肆': '四', '伍': '五', '陆': '六', '柒': '七',
                            '捌': '八', '玖': '九'}
@@ -217,27 +217,39 @@ def traditionalTextConvertFunc(chString,simplifConvertSwitch=True):
 """
 def standardChNumberConvert(chNumberString):
     chNumberStringList = list(chNumberString)
-    #十位补一：
-    for i in range(len(chNumberStringList)):
-        if chNumberStringList[i] == '十':
-            if i == 0 :
-                chNumberStringList.insert(i,'一')
-            else:
-                #如果没有左边计数数字 插入1
-                if chNumberStringList[i-1] in CHINESE_PURE_NUMBER_LIST:
-                    chNumberStringList.insert(i,'一')
 
-    #差位补零
-    #逻辑 如果最后一个单位 不是十结尾 而是百以上 则数字后面补一个比最后一个出现的单位小一级的单位
-    lastCountingUnit = 0
-    for i in range(len(chNumberStringList)-1, -1, -1):
-        if chNumberStringList[i] == '十':
-            if i == 0 :
-                chNumberStringList.insert(i,'一')
+    #大于2的长度字符串才有检测和补位的必要
+    if len(chNumberStringList) > 2:
+        #十位补一：
+        try:
+            tenNumberIndex = chNumberStringList.index('十')
+            if tenNumberIndex == 0:
+                chNumberStringList.insert(tenNumberIndex, '一')
             else:
-                #如果没有左边计数数字 插入1
-                if chNumberStringList[i-1] in CHINESE_PURE_NUMBER_LIST:
-                    chNumberStringList.insert(i,'一')
+                # 如果没有左边计数数字 插入1
+                if chNumberStringList[tenNumberIndex - 1] not in CHINESE_PURE_NUMBER_LIST:
+                    chNumberStringList.insert(tenNumberIndex, '一')
+        except:
+            pass
+
+        #差位补零
+        #逻辑 如果最后一个单位 不是十结尾 而是百以上 则数字后面补一个比最后一个出现的单位小一级的单位
+        #从倒数第二位开始看,且必须是倒数第二位就是单位的才符合条件
+        try:
+            lastCountingUnit = CHINESE_PURE_COUNTING_UNIT_LIST.index(chNumberStringList[len(chNumberStringList)-2])
+            # 如果最末位的是百开头
+            if lastCountingUnit >= 1:
+                # 则字符串最后拼接一个比最后一个单位小一位的单位 例如四万三 变成四万三千
+
+                # 如果最后一位结束的是亿 则补千万
+                if lastCountingUnit == 4:
+                    chNumberStringList.append('千万')
+                else:
+                    chNumberStringList.append(CHINESE_PURE_COUNTING_UNIT_LIST[lastCountingUnit - 1])
+        except:
+            pass
+
+    return ''.join(chNumberStringList)
 
 
 
@@ -262,6 +274,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     """
     简体转换开关
     """
+    originText = chText
 
     chText = traditionalTextConvertFunc(chText,simplifConvert)
 
@@ -425,7 +438,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     """
     进行标准汉字字符串转换 例如 二千二  转换成二千零二
     """
-    CHNumberStringListTemp = CHNumberStringList
+    CHNumberStringListTemp = list(map(lambda x:standardChNumberConvert(x),CHNumberStringList))
 
     """
     将中文转换为数字
@@ -433,7 +446,10 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     digitsStringList = []
     replacedText = chText
     if CHNumberStringList.__len__()>0:
-        digitsStringList = list(map(lambda x:chineseToDigits(x,simpilfy=simpilfy,percentConvert=percentConvert),CHNumberStringList))
+        # digitsStringList = list(map(lambda x:chineseToDigits(x,simpilfy=simpilfy,percentConvert=percentConvert),CHNumberStringList))
+        # 用标准清洗后的字符串进行转换
+        digitsStringList = list(
+            map(lambda x: chineseToDigits(x, simpilfy=simpilfy, percentConvert=percentConvert), CHNumberStringListTemp))
         tupleToReplace = list(zip(CHNumberStringList,digitsStringList,list(map(len,CHNumberStringList))))
 
 
@@ -446,7 +462,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
 
 
     finalResult = {
-        'inputText':chText,
+        'inputText':originText,
         'replacedText':replacedText,
         'CHNumberStringList':CHNumberStringList,
         'digitsStringList':digitsStringList
@@ -484,7 +500,8 @@ if __name__=='__main__':
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
-    print(takeChineseNumberFromString('三亿二千一十七'))
-    print(takeChineseNumberFromString('五亿七千万'))
+    print(takeChineseNumberFromString('伍亿柒仟万拾柒'))
+    print(takeChineseNumberFromString('百分之三亿二百万五'))
+    print(takeChineseNumberFromString('伍亿柒仟万拾柒百分之'))
     #使用普通顺序逻辑引擎
     print(takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八',method='normal'))
