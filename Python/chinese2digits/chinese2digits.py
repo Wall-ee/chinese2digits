@@ -172,11 +172,11 @@ def checkChineseNumberReasonable(chNumber):
 """
 繁体简体转换 及  单位  特殊字符转换 两千变二千
 """
-def traditionalTextConvertFunc(chString,simplifConvertSwitch=True):
+def traditionalTextConvertFunc(chString,traditionalConvertSwitch=True):
     chStringList = list(chString)
     stringLength = len(list(chStringList))
 
-    if simplifConvertSwitch == True:
+    if traditionalConvertSwitch == True:
         for i in range(stringLength):
             #繁体中文数字转简体中文数字
             if TRADITIONAl_CONVERT_DICT.get(chStringList[i],'') != '':
@@ -261,13 +261,13 @@ takingChineseNumberRERules = re.compile('(?:(?:(?:百分之){0,1}[正负]{0,1})|
                                         '(?:(?:[一二三四五六七八九十千万亿兆幺零(?:百(?!分之))]+(?:点[一二三四五六七八九幺零]+){0,1})'
                                         '|(?:(?:[一二三四五六七八九十千万亿兆幺零(?:百(?!分之))]+){0,1}点[一二三四五六七八九幺零]+))')
 
-def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',simplifConvert= True):
+def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',traditionalConvert= True):
     """
     :param chText: chinese string
     :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
     :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
     :param method: chinese number string cut engine. Default is regex. Other means cut using python code logic only
-    :param simplifConvert: Switch to convert the Traditional Chinese character to Simplified chinese
+    :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
     :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
     """
 
@@ -276,7 +276,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     """
     originText = chText
 
-    chText = traditionalTextConvertFunc(chText,simplifConvert)
+    chText = traditionalTextConvertFunc(chText,traditionalConvert)
 
     """
     字符串 汉字数字字符串切割提取
@@ -501,7 +501,7 @@ if __name__=='__main__':
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
     print(takeChineseNumberFromString('伍亿柒仟万拾柒今天天气不错百分之三亿二百万五啦啦啦啦负百分之点二八你好啊三万二'))
-    print(takeChineseNumberFromString('百分之三亿二百万五'))
+    print(takeChineseNumberFromString('哥两好'))
     print(takeChineseNumberFromString('伍亿柒仟万拾柒百分之'))
     #使用普通顺序逻辑引擎
     print(takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八',method='normal'))
