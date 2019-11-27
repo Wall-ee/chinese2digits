@@ -479,3 +479,12 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 //	fmt.Println(TakeChineseNumberFromString("负百分之点二八百分之三五", true, true))
 //	fmt.Println("这个函数被调用了")
 //}
+
+// func main() {
+// 	reg1, err := regexp.Compile(`(?:(?:(?:百分之[正负]{0,1})|(?:[正负](?:百分之){0,1}))(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))|(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))`)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
+// 	fmt.Println(reg1.FindAllStringSubmatch("负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八百分之四十啦啦啦啊四万三千四百二", -1))
+
+// }
