@@ -500,7 +500,7 @@ if __name__=='__main__':
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
-    print(takeChineseNumberFromString('伍亿柒仟万拾柒'))
+    print(takeChineseNumberFromString('伍亿柒仟万拾柒今天天气不错百分之三亿二百万五啦啦啦啦负百分之点二八你好啊三万二'))
     print(takeChineseNumberFromString('百分之三亿二百万五'))
     print(takeChineseNumberFromString('伍亿柒仟万拾柒百分之'))
     #使用普通顺序逻辑引擎
