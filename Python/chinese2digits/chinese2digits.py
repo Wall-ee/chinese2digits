@@ -77,6 +77,11 @@ def coreCHToDigits(chineseChars,simpilfy=None,resultType='string'):
             total = total+str(common_used_ch_numerals.get(i))
     return total
 def chineseToDigits(chineseChars,simpilfy=None,percentConvert = True,resultType='string'):
+
+    """
+    进行标准汉字字符串转换 例如 二千二  转换成二千零二
+    """
+    chineseChars = standardChNumberConvert(str(chineseChars))
     #kaka
     chineseCharsDotSplitList = []
     chineseChars = str(chineseChars)
@@ -435,10 +440,10 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
                 tempTotalChar = ''
 
 
-    """
-    进行标准汉字字符串转换 例如 二千二  转换成二千零二
-    """
-    CHNumberStringListTemp = list(map(lambda x:standardChNumberConvert(x),CHNumberStringList))
+    # """
+    # 进行标准汉字字符串转换 例如 二千二  转换成二千零二
+    # """
+    # CHNumberStringListTemp = list(map(lambda x:standardChNumberConvert(x),CHNumberStringList))
 
     """
     将中文转换为数字
@@ -446,10 +451,10 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     digitsStringList = []
     replacedText = chText
     if CHNumberStringList.__len__()>0:
-        # digitsStringList = list(map(lambda x:chineseToDigits(x,simpilfy=simpilfy,percentConvert=percentConvert),CHNumberStringList))
-        # 用标准清洗后的字符串进行转换
-        digitsStringList = list(
-            map(lambda x: chineseToDigits(x, simpilfy=simpilfy, percentConvert=percentConvert), CHNumberStringListTemp))
+        digitsStringList = list(map(lambda x:chineseToDigits(x,simpilfy=simpilfy,percentConvert=percentConvert),CHNumberStringList))
+        # # 用标准清洗后的字符串进行转换
+        # digitsStringList = list(
+        #     map(lambda x: chineseToDigits(x, simpilfy=simpilfy, percentConvert=percentConvert), CHNumberStringListTemp))
         tupleToReplace = list(zip(CHNumberStringList,digitsStringList,list(map(len,CHNumberStringList))))
 
 

@@ -8,6 +8,7 @@ package chinese2digits
 
 import (
 	"bytes"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -148,6 +149,8 @@ func CoreCHToDigits(chineseCharsToTrans string, simpilfy interface{}) string {
 // ChineseToDigits 是可以识别包含百分号，正负号的函数，并控制是否将百分之10转化为0.1
 func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy interface{}) string {
 
+	chineseCharsToTrans = standardChNumberConvert(chineseCharsToTrans)
+
 	chineseChars := []rune(chineseCharsToTrans)
 
 	// """
@@ -270,91 +273,141 @@ func (a structToReplace) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 // 重写 Less() 方法， 从大到小排序
 func (a structToReplace) Less(i, j int) bool { return a[j].CHNumberStringLen < a[i].CHNumberStringLen }
 
+var CHINESE_PURE_COUNTING_UNIT_LIST = [5]string{"十", "百", "千", "万", "亿"}
 
-"""
-繁体简体转换 及  单位  特殊字符转换 两千变二千
-"""
-def traditionalTextConvertFunc(chString,simplifConvertSwitch=True):
-    chStringList = list(chString)
-    stringLength = len(list(chStringList))
+var TRADITIONAl_CONVERT_DICT = map[string]string{"壹": "一", "贰": "二", "叁": "三", "肆": "四", "伍": "五", "陆": "六", "柒": "七",
+	"捌": "八", "玖": "九"}
+var SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT = map[string]string{"拾": "十", "佰": "百", "仟": "千", "萬": "万", "億": "亿"}
 
-    if simplifConvertSwitch == True:
-        for i in range(stringLength):
-            #繁体中文数字转简体中文数字
-            if TRADITIONAl_CONVERT_DICT.get(chStringList[i],'') != '':
-                chStringList[i] = TRADITIONAl_CONVERT_DICT.get(chStringList[i],'')
+var SPECIAL_NUMBER_CHAR_DICT = map[string]string{"两": "二", "俩": "二"}
 
-    #检查繁体单体转换
-    for i in range(stringLength):
-        #如果 前后有 pure 汉字数字 则转换单位为简体
-        if SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i],'') != '':
-            # 如果前后有单纯的数字 则进行单位转换
-            if i == 0:
-                if chStringList[i+1] in CHINESE_PURE_NUMBER_LIST:
-                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
-            elif i == stringLength-1:
-                if chStringList[i-1] in CHINESE_PURE_NUMBER_LIST:
-                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
-            else:
-                if chStringList[i-1] in CHINESE_PURE_NUMBER_LIST or \
-                        chStringList[i+1] in CHINESE_PURE_NUMBER_LIST :
-                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
-        #特殊变换 俩变二
-        if SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '') != '':
-            # 如果前后有单位 则进行转换
-            if i == 0:
-                if chStringList[i+1] in CHINESE_PURE_COUNTING_UNIT_LIST:
-                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
-            elif i == stringLength-1:
-                if chStringList[i-1] in CHINESE_PURE_COUNTING_UNIT_LIST:
-                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
-            else:
-                if chStringList[i-1] in CHINESE_PURE_COUNTING_UNIT_LIST or \
-                        chStringList[i+1] in CHINESE_PURE_COUNTING_UNIT_LIST :
-                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
-    return ''.join(chStringList)
+func IsExistItem(value interface{}, array interface{}) int {
+	switch reflect.TypeOf(array).Kind() {
+	case reflect.Slice, reflect.Slice:
+		s := reflect.ValueOf(array)
+		for i := 0; i < s.Len(); i++ {
+			if reflect.DeepEqual(value, s.Index(i).Interface()) {
+				return i
+			}
+		}
+	}
+	return -1
+}
 
-"""
-标准表述转换  三千二 变成 三千零二  三千十二变成 三千零一十二
-"""
-def standardChNumberConvert(chNumberString):
-    chNumberStringList = list(chNumberString)
+// """
+// 繁体简体转换 及  单位  特殊字符转换 两千变二千
+// """
+func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) string {
+	chStringList := []byte(chString)
+	stringLength := len(chStringList)
 
-    #大于2的长度字符串才有检测和补位的必要
-    if len(chNumberStringList) > 2:
-        #十位补一：
-        try:
-            tenNumberIndex = chNumberStringList.index('十')
-            if tenNumberIndex == 0:
-                chNumberStringList.insert(tenNumberIndex, '一')
-            else:
-                # 如果没有左边计数数字 插入1
-                if chNumberStringList[tenNumberIndex - 1] not in CHINESE_PURE_NUMBER_LIST:
-                    chNumberStringList.insert(tenNumberIndex, '一')
-        except:
-            pass
+	if simplifConvertSwitch == true {
+		for i := 0; i < len(stringLength); i++ {
+			// #繁体中文数字转简体中文数字
+			charToGet := string(chStringList[i])
+			value, exists := TRADITIONAl_CONVERT_DICT[charToGet]
+			if exists {
+				chStringList[i] = value
+			}
+		}
 
-        #差位补零
-        #逻辑 如果最后一个单位 不是十结尾 而是百以上 则数字后面补一个比最后一个出现的单位小一级的单位
-        #从倒数第二位开始看,且必须是倒数第二位就是单位的才符合条件
-        try:
-            lastCountingUnit = CHINESE_PURE_COUNTING_UNIT_LIST.index(chNumberStringList[len(chNumberStringList)-2])
-            # 如果最末位的是百开头
-            if lastCountingUnit >= 1:
-                # 则字符串最后拼接一个比最后一个单位小一位的单位 例如四万三 变成四万三千
+	}
 
-                # 如果最后一位结束的是亿 则补千万
-                if lastCountingUnit == 4:
-                    chNumberStringList.append('千万')
-                else:
-                    chNumberStringList.append(CHINESE_PURE_COUNTING_UNIT_LIST[lastCountingUnit - 1])
-        except:
-            pass
+	// #检查繁体单体转换
+	for i := 0; i < len(stringLength); i++ {
+		// #如果 前后有 pure 汉字数字 则转换单位为简体
+		charToGet = string(chStringList[i])
+		value, exists := SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT[charToGet]
+		// # 如果前后有单纯的数字 则进行单位转换
+		if exists {
+			switch i {
+			case 0:
+				if IsExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+					chStringList[i] = value
+				}
+			case stringLength - 1:
+				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+					chStringList[i] = value
+				}
+			default:
+				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 ||
+					IsExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+					chStringList[i] = value
+				}
+			}
+		}
+		// #特殊变换 俩变二
+		charToGet = string(chStringList[i])
+		value, exists = SPECIAL_NUMBER_CHAR_DICT[charToGet]
+		// # 如果前后有单纯的数字 则进行单位转换
+		if exists {
+			switch i {
+			case 0:
+				if IsExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+					chStringList[i] = value
+				}
+			case stringLength - 1:
+				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+					chStringList[i] = value
+				}
+			default:
+				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 ||
+					IsExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+					chStringList[i] = value
+				}
+			}
+		}
 
-    return ''.join(chNumberStringList)
+	}
+
+	return string(chStringList)
+}
+
+// """
+// 标准表述转换  三千二 变成 三千零二  三千十二变成 三千零一十二
+// """
+func standardChNumberConvert(chNumberString string) string {
+	chNumberStringList := []byte(chNumberString)
+	newChNumberStringList := []byte("")
+
+	// #大于2的长度字符串才有检测和补位的必要
+	if len(chNumberString) > 2 {
+		// #十位补一：
+		tenNumberIndex := IsExistItem("十", chNumberStringList)
+		if tenNumberIndex > -1 {
+			if tenNumberIndex == 0 {
+				newChNumberStringList = append('一', chNumberStringList)
+			} else {
+				// # 如果没有左边计数数字 插入1
+				if IsExistItem(chNumberStringList[tenNumberIndex-1], CHINESE_PURE_NUMBER_LIST) == -1 {
+					newChNumberStringList = append(chNumberStringList[:tenNumberIndex], '一', chNumberStringList[tenNumberIndex:])
+				}
+			}
+		}
+
+		// #差位补零
+		// #逻辑 如果最后一个单位 不是十结尾 而是百以上 则数字后面补一个比最后一个出现的单位小一级的单位
+		// #从倒数第二位开始看,且必须是倒数第二位就是单位的才符合条件
+		lastCountingUnit := IsExistItem(string(chNumberStringList[len(chNumberStringList)-2]), CHINESE_PURE_COUNTING_UNIT_LIST)
+		// # 如果最末位的是百开头
+		if lastCountingUnit >= 1 {
+			// # 则字符串最后拼接一个比最后一个单位小一位的单位 例如四万三 变成四万三千
+			// # 如果最后一位结束的是亿 则补千万
+			if lastCountingUnit == 4 {
+				chNumberStringList = apppend(chNumberStringList, '千', '万')
+			} else {
+				chNumberStringList = append(chNumberStringList, []byte(CHINESE_PURE_COUNTING_UNIT_LIST[lastCountingUnit-1]))
+
+			}
+
+		}
+
+	}
+	return string(chNumberStringList)
+}
 
 // TakeChineseNumberFromString 将句子中的汉子数字提取的整体函数
-func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, percentConvert bool) interface{} {
+func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, percentConvert bool, traditionalConvert bool) interface{} {
 
 	tempCHNumberChar := ""
 	tempCHSignChar := ""
