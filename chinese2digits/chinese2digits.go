@@ -280,10 +280,11 @@ var TRADITIONAl_CONVERT_DICT = map[string]string{"壹": "一", "贰": "二", "�
 var SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT = map[string]string{"拾": "十", "佰": "百", "仟": "千", "萬": "万", "億": "亿"}
 
 var SPECIAL_NUMBER_CHAR_DICT = map[string]string{"两": "二", "俩": "二"}
+var CHINESE_PURE_NUMBER_LIST = []string{"幺", "一", "二", "两", "三", "四", "五", "六", "七", "八", "九", "十","零"}
 
 func IsExistItem(value interface{}, array interface{}) int {
 	switch reflect.TypeOf(array).Kind() {
-	case reflect.Slice, reflect.Slice:
+	case reflect.Slice, reflect.Array:
 		s := reflect.ValueOf(array)
 		for i := 0; i < s.Len(); i++ {
 			if reflect.DeepEqual(value, s.Index(i).Interface()) {
@@ -300,21 +301,21 @@ func IsExistItem(value interface{}, array interface{}) int {
 func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) string {
 	chStringList := []byte(chString)
 	stringLength := len(chStringList)
-
+	charToGet := ""
 	if simplifConvertSwitch == true {
-		for i := 0; i < len(stringLength); i++ {
+		for i := 0; i < stringLength; i++ {
 			// #繁体中文数字转简体中文数字
 			charToGet := string(chStringList[i])
 			value, exists := TRADITIONAl_CONVERT_DICT[charToGet]
 			if exists {
-				chStringList[i] = value
+				chStringList[i] = []byte(value)[0]
 			}
 		}
 
 	}
 
 	// #检查繁体单体转换
-	for i := 0; i < len(stringLength); i++ {
+	for i := 0; i < stringLength; i++ {
 		// #如果 前后有 pure 汉字数字 则转换单位为简体
 		charToGet = string(chStringList[i])
 		value, exists := SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT[charToGet]
@@ -323,16 +324,16 @@ func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) stri
 			switch i {
 			case 0:
 				if IsExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-					chStringList[i] = value
+					chStringList[i] = []byte(value)[0]
 				}
 			case stringLength - 1:
 				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-					chStringList[i] = value
+					chStringList[i] = []byte(value)[0]
 				}
 			default:
 				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 ||
 					IsExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-					chStringList[i] = value
+					chStringList[i] = []byte(value)[0]
 				}
 			}
 		}
@@ -344,16 +345,16 @@ func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) stri
 			switch i {
 			case 0:
 				if IsExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-					chStringList[i] = value
+					chStringList[i] = []byte(value)[0]
 				}
 			case stringLength - 1:
 				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-					chStringList[i] = value
+					chStringList[i] = []byte(value)[0]
 				}
 			default:
 				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 ||
 					IsExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-					chStringList[i] = value
+					chStringList[i] = []byte(value)[0]
 				}
 			}
 		}
@@ -394,7 +395,7 @@ func standardChNumberConvert(chNumberString string) string {
 			// # 则字符串最后拼接一个比最后一个单位小一位的单位 例如四万三 变成四万三千
 			// # 如果最后一位结束的是亿 则补千万
 			if lastCountingUnit == 4 {
-				chNumberStringList = apppend(chNumberStringList, '千', '万')
+				chNumberStringList = append(chNumberStringList, []byte("千万"))
 			} else {
 				chNumberStringList = append(chNumberStringList, []byte(CHINESE_PURE_COUNTING_UNIT_LIST[lastCountingUnit-1]))
 
