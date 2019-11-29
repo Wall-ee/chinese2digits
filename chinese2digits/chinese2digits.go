@@ -244,16 +244,13 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 		}
 		return finalTotal
 
-	} else {
-		if percentString == "%" {
-			finalTotal = convertResult + percentString
-			return finalTotal
-		} else {
-			finalTotal = convertResult
-			return finalTotal
-		}
-
 	}
+	if percentString == "%" {
+		finalTotal = convertResult + percentString
+		return finalTotal
+	}
+	finalTotal = convertResult
+	return finalTotal
 }
 
 type structCHAndDigit struct {
@@ -284,7 +281,7 @@ var SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT = map[string]string{"拾": "十"
 var SPECIAL_NUMBER_CHAR_DICT = map[string]string{"两": "二", "俩": "二"}
 var CHINESE_PURE_NUMBER_LIST = []string{"幺", "一", "二", "两", "三", "四", "五", "六", "七", "八", "九", "十", "零"}
 
-func IsExistItem(value interface{}, array interface{}) int {
+func isExistItem(value interface{}, array interface{}) int {
 	switch reflect.TypeOf(array).Kind() {
 	case reflect.Slice, reflect.Array:
 		s := reflect.ValueOf(array)
@@ -325,16 +322,16 @@ func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) stri
 		if exists {
 			switch i {
 			case 0:
-				if IsExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+				if isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
 					chStringList[i] = []rune(value)[0]
 				}
 			case stringLength - 1:
-				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+				if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 {
 					chStringList[i] = []rune(value)[0]
 				}
 			default:
-				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 ||
-					IsExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+				if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 ||
+					isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
 					chStringList[i] = []rune(value)[0]
 				}
 			}
@@ -346,16 +343,16 @@ func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) stri
 		if exists {
 			switch i {
 			case 0:
-				if IsExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+				if isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
 					chStringList[i] = []rune(value)[0]
 				}
 			case stringLength - 1:
-				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+				if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
 					chStringList[i] = []rune(value)[0]
 				}
 			default:
-				if IsExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 ||
-					IsExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+				if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 ||
+					isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
 					chStringList[i] = []rune(value)[0]
 				}
 			}
@@ -376,13 +373,13 @@ func standardChNumberConvert(chNumberString string) string {
 	// #大于2的长度字符串才有检测和补位的必要
 	if len(chNumberStringList) > 2 {
 		// #十位补一：
-		tenNumberIndex := IsExistItem([]rune("十")[0], chNumberStringList)
+		tenNumberIndex := isExistItem([]rune("十")[0], chNumberStringList)
 		if tenNumberIndex > -1 {
 			if tenNumberIndex == 0 {
 				newChNumberStringList = "一" + string(chNumberStringList)
 			} else {
 				// # 如果没有左边计数数字 插入1
-				if IsExistItem(chNumberStringList[(tenNumberIndex-1)], CHINESE_PURE_NUMBER_LIST) == -1 {
+				if isExistItem(chNumberStringList[(tenNumberIndex-1)], CHINESE_PURE_NUMBER_LIST) == -1 {
 					newChNumberStringList = string(chNumberStringList[:tenNumberIndex]) + "一" + string(chNumberStringList[tenNumberIndex:])
 				}
 			}
@@ -391,7 +388,7 @@ func standardChNumberConvert(chNumberString string) string {
 		// #差位补零
 		// #逻辑 如果最后一个单位 不是十结尾 而是百以上 则数字后面补一个比最后一个出现的单位小一级的单位
 		// #从倒数第二位开始看,且必须是倒数第二位就是单位的才符合条件
-		lastCountingUnit := IsExistItem(string([]rune(newChNumberStringList)[len([]rune(newChNumberStringList))-2]), CHINESE_PURE_COUNTING_UNIT_LIST)
+		lastCountingUnit := isExistItem(string([]rune(newChNumberStringList)[len([]rune(newChNumberStringList))-2]), CHINESE_PURE_COUNTING_UNIT_LIST)
 		// # 如果最末位的是百开头
 		if lastCountingUnit >= 1 {
 			// # 则字符串最后拼接一个比最后一个单位小一位的单位 例如四万三 变成四万三千
@@ -412,8 +409,7 @@ func standardChNumberConvert(chNumberString string) string {
 var regRule, regError = regexp.Compile(`(?:(?:(?:百分之[正负]{0,1})|(?:[正负](?:百分之){0,1}))(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))|(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))`)
 
 // TakeChineseNumberFromString 将句子中的汉子数字提取的整体函数
-func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, percentConvert bool, traditionalConvert bool,
-	method string) interface{} {
+func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interface{} {
 
 	tempCHNumberChar := ""
 	tempCHSignChar := ""
@@ -422,6 +418,14 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 	CHNumberStringList := []string{}
 	tempTotalChar := ""
 
+	//默认参数设置
+	if len(opt) > 4 {
+		panic("too many arguments")
+	}
+	simpilfy := "auto"
+	percentConvert := true
+	traditionalConvert := true
+	method := "regex"
 	//"""
 	//简体转换开关
 	//"""
@@ -434,7 +438,7 @@ func TakeChineseNumberFromString(chTextString string, simpilfy interface{}, perc
 		if regError != nil {
 			fmt.Println(regError)
 		}
-		regMatchResult := regRule.FindAllStringSubmatch(chTextString, -1)
+		regMatchResult := regRule.FindAllStringSubmatch(convertedString, -1)
 		for i := 0; i < len(regMatchResult); i++ {
 			// fmt.Println(aa[i])
 			CHNumberStringList = append(CHNumberStringList, regMatchResult[i][0])
