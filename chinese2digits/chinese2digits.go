@@ -422,10 +422,40 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	if len(opt) > 4 {
 		panic("too many arguments")
 	}
-	simpilfy := "auto"
-	percentConvert := true
-	traditionalConvert := true
-	method := "regex"
+
+	var simpilfy interface{}
+	var percentConvert bool
+	var traditionalConvert bool
+	var method interface{}
+
+	switch len(opt) {
+	case 1:
+		simpilfy = opt[0]
+		percentConvert = true
+		traditionalConvert = true
+		method = "regex"
+	case 2:
+		simpilfy = opt[0]
+		percentConvert = opt[1].(bool)
+		traditionalConvert = true
+		method = "regex"
+	case 3:
+		simpilfy = opt[0]
+		percentConvert = opt[1].(bool)
+		traditionalConvert = opt[2].(bool)
+		method = "regex"
+	case 4:
+		simpilfy = opt[0]
+		percentConvert = opt[1].(bool)
+		traditionalConvert = opt[2].(bool)
+		method = opt[3]
+	default:
+		simpilfy = "auto"
+		percentConvert = true
+		traditionalConvert = true
+		method = "regex"
+	}
+
 	//"""
 	//简体转换开关
 	//"""
