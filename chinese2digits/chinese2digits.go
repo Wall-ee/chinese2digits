@@ -170,14 +170,21 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 	}
 
 	// """
-	// 看有没有百分号
+	// 看有没有百分号 千分号 万分号
 	// """
 	chineseChars = []rune(chineseCharsToTrans)
-	percentString := ""
+	perCountingString := ""
 
-	if strings.Contains(chineseCharsToTrans, chinesePercentString) {
-		percentString = "%"
-		chineseCharsToTrans = strings.Replace(chineseCharsToTrans, chinesePercentString, "", -1)
+	for i := 0; i < len(CHINESE_PER_COUNTING_STRING_LIST); i++ {
+		if strings.Contains(chineseCharsToTrans, CHINESE_PER_COUNTING_STRING_LIST[i]) {
+			value, exists := CHINESE_PER_COUNTING_DICT[string(CHINESE_PER_COUNTING_STRING_LIST[i])]
+			if exists {
+				perCountingString = value
+			} else {
+				perCountingString = "%"
+			}
+			chineseCharsToTrans = strings.Replace(chineseCharsToTrans, perCountingString, "", -1)
+		}
 	}
 
 	chineseChars = []rune(chineseCharsToTrans)
@@ -225,7 +232,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 
 	finalTotal := ""
 	if percentConvert == true {
-		if percentString == "%" {
+		if perCountingString != "" {
 			floatResult, err := strconv.ParseFloat(convertResult, 32)
 			if err != nil {
 				panic(err)
@@ -245,8 +252,8 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 		return finalTotal
 
 	}
-	if percentString == "%" {
-		finalTotal = convertResult + percentString
+	if perCountingString != "" {
+		finalTotal = convertResult + perCountingString
 		return finalTotal
 	}
 	finalTotal = convertResult
@@ -280,6 +287,9 @@ var SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT = map[string]string{"拾": "十"
 
 var SPECIAL_NUMBER_CHAR_DICT = map[string]string{"两": "二", "俩": "二"}
 var CHINESE_PURE_NUMBER_LIST = []string{"幺", "一", "二", "两", "三", "四", "五", "六", "七", "八", "九", "十", "零"}
+
+var CHINESE_PER_COUNTING_STRING_LIST = []string{"百分之", "千分之", "万分之"}
+var CHINESE_PER_COUNTING_DICT = map[string]string{"百分之": "%", "千分之": "‰", "万分之": "‱"}
 
 func isExistItem(value interface{}, array interface{}) int {
 	switch reflect.TypeOf(array).Kind() {
@@ -403,6 +413,26 @@ func standardChNumberConvert(chNumberString string) string {
 		}
 
 	}
+	//大于一的检查是不是万三，千四五这种
+	perCountSwitch := false
+	if len(newChNumberStringList) > 1 {
+		// #十位补一：
+		fistCharCheckResult := isExistItem(string(newChNumberStringList[0]), []string{"千", "万"})
+		if fistCharCheckResult > -1 {
+			for i := 1; i < len(newChNumberStringList); i++ {
+				// #其余位数都是纯数字 才能执行
+				if isExistItem(newChNumberStringList[i], CHINESE_PURE_NUMBER_LIST) > -1 {
+					perCountSwitch = true
+				} else {
+					perCountSwitch = false
+				}
+			}
+			if perCountSwitch == true {
+				newChNumberStringList = string([]rune(newChNumberStringList)[:1]) + "分之" + string([]rune(newChNumberStringList)[1:])
+			}
+		}
+	}
+
 	return string(newChNumberStringList)
 }
 
@@ -523,7 +553,7 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 			//不是字符是不是"百分之"。
 			//"""
 			if (len(chText) - i) >= 3 {
-				if string(chText[i:(i+3)]) == chinesePercentString {
+				if isExistItem(string(chText[i:(i+3)]), CHINESE_PER_COUNTING_STRING_LIST) > -1 {
 					//"""
 					//如果 百分之前面有数字  则 存到结果里面
 					//"""

@@ -5,11 +5,11 @@ import re
 CHINESE_CHAR_LIST = ['幺','零', '一', '二', '两', '三', '四', '五', '六', '七', '八', '九', '十', '百', '千', '万', '亿']
 CHINESE_SIGN_LIST = ['负','正','-','+']
 CHINESE_CONNECTING_SIGN_LIST = ['.','点','·']
-CHINESE_PERCENT_STRING = '百分之'
+CHINESE_PER_COUNTING_STRING_LIST = ['百分之','千分之','万分之']
 CHINESE_PURE_NUMBER_LIST = ['幺', '一', '二', '两', '三', '四', '五', '六', '七', '八', '九', '十','零']
 
 CHINESE_SIGN_DICT = {'负':'-','正':'+','-':'-','+':'+'}
-CHINESE_PERCENT_DICT = {'百分之':'%'}
+CHINESE_PER_COUNTING_DICT = {'百分之':'%','千分之':'‰','万分之':'‱'}
 CHINESE_CONNECTING_SIGN_DICT = {'.':'.','点':'.','·':'.'}
 CHINESE_COUNTING_STRING = {'十':10, '百':100, '千':1000, '万':10000, '亿':100000000}
 CHINESE_PURE_COUNTING_UNIT_LIST = ['十','百','千','万','亿']
@@ -25,7 +25,7 @@ SPECIAL_NUMBER_CHAR_DICT = {'两':'二','俩':'二'}
 """
 common_used_ch_numerals = {'幺':1,'零':0, '一':1, '二':2, '两':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9, '十':10, '百':100, '千':1000, '万':10000, '亿':100000000}
 
-def coreCHToDigits(chineseChars,simpilfy=None,resultType='string'):
+def coreCHToDigits(chineseChars,simpilfy=None):
     if simpilfy is None:
         if chineseChars.__len__()>1:
             """
@@ -76,7 +76,7 @@ def coreCHToDigits(chineseChars,simpilfy=None,resultType='string'):
                 raise TypeError ('string contains illegal char')
             total = total+str(common_used_ch_numerals.get(i))
     return total
-def chineseToDigits(chineseChars,simpilfy=None,percentConvert = True,resultType='string'):
+def chineseToDigits(chineseChars,simpilfy=None,percentConvert = True):
 
     """
     进行标准汉字字符串转换 例如 二千二  转换成二千零二
@@ -103,10 +103,11 @@ def chineseToDigits(chineseChars,simpilfy=None,percentConvert = True,resultType=
     """
     看有没有百分号
     """
-    percentString = ''
-    if CHINESE_PERCENT_STRING in chineseChars:
-        percentString = '%'
-        chineseChars = chineseChars.replace(CHINESE_PERCENT_STRING,'')
+    perCountingString = ''
+    for perCountingUnit in CHINESE_PER_COUNTING_STRING_LIST:
+        if perCountingUnit in chineseChars:
+            perCountingString = CHINESE_PER_COUNTING_DICT.get(perCountingUnit,'%')
+            chineseChars = chineseChars.replace(perCountingUnit,'')
 
     """
     小数点切割，看看是不是有小数点
@@ -130,37 +131,15 @@ def chineseToDigits(chineseChars,simpilfy=None,percentConvert = True,resultType=
     convertResult = sign + convertResult
 
     if percentConvert == True:
-        if percentString == '%':
+        if perCountingString == '%':
             convertResult = float(Decimal(convertResult)/100)
-        if resultType == 'int':
-            total = int(convertResult)
-        elif resultType == 'float':
-            total = float(convertResult)
-        elif resultType == 'string':
-            total = str(convertResult)
-        else:
-            total = str(convertResult)
+        elif perCountingString == '‰':
+            convertResult = float(Decimal(convertResult)/1000)
+        elif perCountingString == '‱':
+            convertResult = float(Decimal(convertResult)/10000)
+        total = str(convertResult)
     else:
-        if percentString == '%':
-            if resultType == 'string':
-                total = convertResult + percentString
-            else:
-                convertResult =  float(Decimal(convertResult)/100)
-                if resultType == 'int':
-                    total = int(convertResult)
-                elif resultType == 'float':
-                    total = float(convertResult)
-                else:
-                    total = str(convertResult)
-        else:
-            if resultType == 'int':
-                total = int(convertResult)
-            elif resultType == 'float':
-                total = float(convertResult)
-            elif resultType == 'string':
-                total = str(convertResult)
-            else:
-                total = str(convertResult)
+        total = convertResult + perCountingString
     return total
 
 
@@ -253,7 +232,18 @@ def standardChNumberConvert(chNumberString):
                     chNumberStringList.append(CHINESE_PURE_COUNTING_UNIT_LIST[lastCountingUnit - 1])
         except:
             pass
-
+    #检查是否是 万三  千四点五这种表述
+    perCountSwitch = 0
+    if len(chNumberStringList) >1:
+        if chNumberStringList[0] in ['千','万']:
+            for i in range(1,len(chNumberStringList)):
+                #其余位数都是纯数字 才能执行
+                if chNumberStringList[i] in CHINESE_PURE_NUMBER_LIST:
+                    perCountSwitch = 1
+                else:
+                    perCountSwitch = 0
+    if perCountSwitch == 1:
+       chNumberStringList = chNumberStringList[:1]+['分','之']+chNumberStringList[1:]
     return ''.join(chNumberStringList)
 
 
@@ -340,7 +330,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
             """
             不是字符是不是"百分之"。
             """
-            if chText[i:(i + 3)] == CHINESE_PERCENT_STRING:
+            if chText[i:(i + 3)] in CHINESE_PER_COUNTING_STRING_LIST:
 
 
                 """
@@ -504,6 +494,7 @@ if __name__=='__main__':
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
     print(takeChineseNumberFromString('伍亿柒仟万拾柒今天天气不错百分之三亿二百万五啦啦啦啦负百分之点二八你好啊三万二'))
+    print(takeChineseNumberFromString('llalala万三威风威风千四五'))
     print(takeChineseNumberFromString('哥两好'))
     print(takeChineseNumberFromString('伍亿柒仟万拾柒百分之'))
     #使用普通顺序逻辑引擎
