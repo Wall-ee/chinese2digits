@@ -183,7 +183,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 			} else {
 				perCountingString = "%"
 			}
-			chineseCharsToTrans = strings.Replace(chineseCharsToTrans, perCountingString, "", -1)
+			chineseCharsToTrans = strings.Replace(chineseCharsToTrans, CHINESE_PER_COUNTING_STRING_LIST[i], "", -1)
 		}
 	}
 
@@ -237,13 +237,19 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 			if err != nil {
 				panic(err)
 			} else {
-				//看小数点后面有几位
+				//看小数点后面有几位，如果小数点右边有数字 则手动保留一定的位数
 				convertResultDotSplitList := strings.Split(convertResult, ".")
+				rightOfConvertResultDotString := ""
 				if len(convertResultDotSplitList) > 1 {
-					rightOfConvertResultDotString := string(convertResultDotSplitList[1])
+					rightOfConvertResultDotString = string(convertResultDotSplitList[1])
+				}
+				switch perCountingString {
+				case "%":
 					finalTotal = strconv.FormatFloat(floatResult/100, 'f', (len(rightOfConvertResultDotString) + 2), 32)
-				} else {
-					finalTotal = strconv.FormatFloat(floatResult/100, 'f', 2, 32)
+				case "‰":
+					finalTotal = strconv.FormatFloat(floatResult/1000, 'f', (len(rightOfConvertResultDotString) + 3), 32)
+				case "‱":
+					finalTotal = strconv.FormatFloat(floatResult/10000, 'f', (len(rightOfConvertResultDotString) + 4), 32)
 				}
 			}
 		} else {
@@ -314,7 +320,7 @@ func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) stri
 	if simplifConvertSwitch == true {
 		for i := 0; i < stringLength; i++ {
 			// #繁体中文数字转简体中文数字
-			charToGet := string(chStringList[i])
+			charToGet = string(chStringList[i])
 			value, exists := TRADITIONAl_CONVERT_DICT[charToGet]
 			if exists {
 				chStringList[i] = []rune(value)[0]
@@ -415,20 +421,21 @@ func standardChNumberConvert(chNumberString string) string {
 	}
 	//大于一的检查是不是万三，千四五这种
 	perCountSwitch := false
+	tempNewChNumberStringList := []rune(newChNumberStringList)
 	if len(newChNumberStringList) > 1 {
 		// #十位补一：
-		fistCharCheckResult := isExistItem(string(newChNumberStringList[0]), []string{"千", "万"})
+		fistCharCheckResult := isExistItem(string(tempNewChNumberStringList[0]), []string{"千", "万"})
 		if fistCharCheckResult > -1 {
-			for i := 1; i < len(newChNumberStringList); i++ {
+			for i := 1; i < len(tempNewChNumberStringList); i++ {
 				// #其余位数都是纯数字 才能执行
-				if isExistItem(newChNumberStringList[i], CHINESE_PURE_NUMBER_LIST) > -1 {
+				if isExistItem(string(tempNewChNumberStringList[i]), CHINESE_PURE_NUMBER_LIST) > -1 {
 					perCountSwitch = true
 				} else {
 					perCountSwitch = false
 				}
 			}
 			if perCountSwitch == true {
-				newChNumberStringList = string([]rune(newChNumberStringList)[:1]) + "分之" + string([]rune(newChNumberStringList)[1:])
+				newChNumberStringList = string(tempNewChNumberStringList[:1]) + "分之" + string(tempNewChNumberStringList[1:])
 			}
 		}
 	}
@@ -499,9 +506,15 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 			fmt.Println(regError)
 		}
 		regMatchResult := regRule.FindAllStringSubmatch(convertedString, -1)
+		tempText := ""
 		for i := 0; i < len(regMatchResult); i++ {
 			// fmt.Println(aa[i])
-			CHNumberStringList = append(CHNumberStringList, regMatchResult[i][0])
+
+			tempText = regMatchResult[i][0]
+			if checkChineseNumberReasonable(tempText) {
+				CHNumberStringList = append(CHNumberStringList, tempText)
+			}
+			// CHNumberStringList = append(CHNumberStringList, regMatchResult[i][0])
 		}
 
 	} else {
