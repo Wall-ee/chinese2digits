@@ -432,6 +432,8 @@ func standardChNumberConvert(chNumberString string) string {
 					perCountSwitch = true
 				} else {
 					perCountSwitch = false
+					//有一个不合适 退出循环
+					break
 				}
 			}
 			if perCountSwitch == true {
@@ -443,7 +445,31 @@ func standardChNumberConvert(chNumberString string) string {
 	return string(newChNumberStringList)
 }
 
-var regRule, regError = regexp.Compile(`(?:(?:(?:百分之[正负]{0,1})|(?:[正负](?:百分之){0,1}))(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))|(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))`)
+//检查初次提取的汉字数字是否切分正确
+func checkNumberSeg(chineseNumberList []string) []string {
+	newChineseNumberList := []string{}
+	tempPreCounting := ""
+	for i := 0; i < len(chineseNumberList); i++ {
+		// #新字符串 需要加上上一个字符串 最后3位的判断结果
+		newChNumberString := tempPreCounting + chineseNumberList[i]
+		tempChineseNumberList := []rune(newChNumberString)
+		if len(tempChineseNumberList) > 2 {
+			lastString := string(tempChineseNumberList[len(tempChineseNumberList)-3:])
+			// #如果最后3位是百分比 那么本字符去掉最后三位  下一个数字加上最后3位
+			if isExistItem(lastString, CHINESE_PER_COUNTING_STRING_LIST) > -1 {
+				tempPreCounting = lastString
+				// #如果最后三位 是  那么截掉最后3位
+				newChNumberString = string(tempChineseNumberList[:len(tempChineseNumberList)-3])
+			} else {
+				tempPreCounting = ""
+			}
+		}
+		newChineseNumberList = append(newChineseNumberList, newChNumberString)
+	}
+	return newChineseNumberList
+}
+
+var regRule, regError = regexp.Compile(`(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}`)
 
 // TakeChineseNumberFromString 将句子中的汉子数字提取的整体函数
 func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interface{} {
@@ -506,11 +532,22 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 			fmt.Println(regError)
 		}
 		regMatchResult := regRule.FindAllStringSubmatch(convertedString, -1)
+
 		tempText := ""
+		CHNumberStringListTemp := []string{}
 		for i := 0; i < len(regMatchResult); i++ {
+			tempText = regMatchResult[i][0]
+			CHNumberStringListTemp = append(CHNumberStringListTemp, tempText)
+		}
+
+		// #检查末尾百分之万分之问题
+		CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
+
+		//检查合理性
+		for i := 0; i < len(CHNumberStringListTemp); i++ {
 			// fmt.Println(aa[i])
 
-			tempText = regMatchResult[i][0]
+			tempText = CHNumberStringListTemp[i]
 			if checkChineseNumberReasonable(tempText) {
 				CHNumberStringList = append(CHNumberStringList, tempText)
 			}

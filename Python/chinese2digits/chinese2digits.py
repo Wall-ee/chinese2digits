@@ -242,17 +242,36 @@ def standardChNumberConvert(chNumberString):
                     perCountSwitch = 1
                 else:
                     perCountSwitch = 0
+                    #y有一个不是数字 直接退出循环
+                    break
     if perCountSwitch == 1:
        chNumberStringList = chNumberStringList[:1]+['分','之']+chNumberStringList[1:]
     return ''.join(chNumberStringList)
 
 
+def checkNumberSeg(chineseNumberList):
+    newChineseNumberList = []
+    tempPreCounting = ''
+    for i in range(len(chineseNumberList)):
+        #新字符串 需要加上上一个字符串 最后3位的判断结果
+        newChNumberString = tempPreCounting  + chineseNumberList[i]
+        lastString = newChNumberString[-3:]
+        #如果最后3位是百分比 那么本字符去掉最后三位  下一个数字加上最后3位
+        if lastString in CHINESE_PER_COUNTING_STRING_LIST:
+            tempPreCounting = lastString
+            #如果最后三位 是  那么截掉最后3位
+            newChNumberString = newChNumberString[:-3]
+        else:
+            tempPreCounting = ''
+        newChineseNumberList.append(newChNumberString)
+    return newChineseNumberList
 
 #以百分号作为大逻辑区分。 是否以百分号作为新的数字切割逻辑 所以同一套切割逻辑要有  或关系   有百分之结尾 或者  没有百分之结尾
-takingChineseNumberRERules = re.compile('(?:(?:(?:百分之[正负]{0,1})|(?:[正负](?:百分之){0,1}))'
+takingChineseNumberRERules = re.compile('(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))'
                                         '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})'
-                                        '|(?:点[一二三四五六七八九幺零]+)))|(?:(?:[一二三四五六七八九十千万亿兆幺零百]+'
-                                        '(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))')
+                                        '|(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|'
+                                        '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})'
+                                        '|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}')
 
 def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',traditionalConvert= True):
     """
@@ -277,6 +296,10 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     """
     if method == 'regex':
         CHNumberStringListTemp = takingChineseNumberRERules.findall(chText)
+        #检查末尾百分之万分之问题
+        CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
+
+        #检查合理性
         CHNumberStringList= []
         for tempText in CHNumberStringListTemp:
             if checkChineseNumberReasonable(tempText):
@@ -493,6 +516,8 @@ if __name__=='__main__':
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
+    print(takeChineseNumberFromString('百分之四百三十二万分之四三千分之五'))
+
     print(takeChineseNumberFromString('伍亿柒仟万拾柒今天天气不错百分之三亿二百万五啦啦啦啦负百分之点二八你好啊三万二'))
     print(takeChineseNumberFromString('llalala万三威风威风千四五'))
     print(takeChineseNumberFromString('哥两好'))
