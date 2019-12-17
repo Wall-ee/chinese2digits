@@ -25,6 +25,32 @@ SPECIAL_NUMBER_CHAR_DICT = {'两':'二','俩':'二'}
 """
 common_used_ch_numerals = {'幺':1,'零':0, '一':1, '二':2, '两':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9, '十':10, '百':100, '千':1000, '万':10000, '亿':100000000}
 
+
+#以百分号作为大逻辑区分。 是否以百分号作为新的数字切割逻辑 所以同一套切割逻辑要有  或关系   有百分之结尾 或者  没有百分之结尾
+takingChineseNumberRERules = re.compile('(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))'
+                                        '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})'
+                                        '|(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|'
+                                        '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})'
+                                        '|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}')
+#数字汉字混合提取的正则引擎
+takingChineseDigitsMixRERules = re.compile('(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}'
+                                           '(?:(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))'
+                                           '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+                                           '(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|'
+                                           '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+                                           '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})')
+
+PURE_DIGITS_RE = re.compile('[0-9]')
+
+
+
+
+DIGITS_CHAR_LIST = ['0','1', '2', '3', '4', '5', '6', '7', '8', '9']
+DIGITS_SIGN_LIST = ['-','+']
+DIGITS_CONNECTING_SIGN_LIST = ['.']
+DIGITS_PERCENT_STRING = '%'
+takingDigitsRERule = re.compile('(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}')
+
 def coreCHToDigits(chineseChars,simpilfy=None):
     if simpilfy is None:
         if chineseChars.__len__()>1:
@@ -76,8 +102,26 @@ def coreCHToDigits(chineseChars,simpilfy=None):
                 raise TypeError ('string contains illegal char')
             total = total+str(common_used_ch_numerals.get(i))
     return total
-def chineseToDigits(chineseChars,simpilfy=None,percentConvert = True):
+def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
 
+
+    """
+    汉字数字切割 然后再进行识别
+    """
+
+    chineseChars = list(re.findall(takingChineseNumberRERules,chineseDigitsMixString))[0]
+
+    try:
+        digitsChars = list(re.findall(takingDigitsRERule,chineseDigitsMixString))[0]
+        if digitsChars.__contains__('%'):
+            digitsChars = float(Decimal(digitsChars.replace('%', '')) / 100)
+        else:
+            """
+            注意 .3 需要能自动转换成0.3
+            """
+            digitsChars = float(digitsChars)
+    except:
+        digitsChars = 1
     """
     进行标准汉字字符串转换 例如 二千二  转换成二千零二
     """
@@ -137,20 +181,30 @@ def chineseToDigits(chineseChars,simpilfy=None,percentConvert = True):
             convertResult = float(Decimal(convertResult)/1000)
         elif perCountingString == '‱':
             convertResult = float(Decimal(convertResult)/10000)
-        total = str(convertResult)
+        """
+        最终结果要乘以数字part digits part
+        """
+        total = str(float(convertResult) * digitsChars)
     else:
-        total = convertResult + perCountingString
+        total = str(float(convertResult) * digitsChars) + perCountingString
     return total
+
 
 
 def checkChineseNumberReasonable(chNumber):
     if chNumber.__len__()>0:
         """
-        如果汉字长度大于0 则判断是不是 万  千  单字这种
+        如果字符串包含数字,则返回 true  如果不包含数字 则进行下面的逻辑
         """
-        for i in CHINESE_PURE_NUMBER_LIST:
-            if i in chNumber:
-                return True
+        if re.findall(PURE_DIGITS_RE,chNumber).__len__()>0:
+            return True
+        else:
+            """
+            如果数字没有长度，如果汉字长度大于0 则判断是不是 万  千  单字这种
+            """
+            for i in CHINESE_PURE_NUMBER_LIST:
+                if i in chNumber:
+                    return True
     return False
 
 """
@@ -266,12 +320,7 @@ def checkNumberSeg(chineseNumberList):
         newChineseNumberList.append(newChNumberString)
     return newChineseNumberList
 
-#以百分号作为大逻辑区分。 是否以百分号作为新的数字切割逻辑 所以同一套切割逻辑要有  或关系   有百分之结尾 或者  没有百分之结尾
-takingChineseNumberRERules = re.compile('(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))'
-                                        '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})'
-                                        '|(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|'
-                                        '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})'
-                                        '|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}')
+
 
 def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',traditionalConvert= True):
     """
@@ -295,7 +344,8 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     正则表达式方法
     """
     if method == 'regex':
-        CHNumberStringListTemp = takingChineseNumberRERules.findall(chText)
+        # CHNumberStringListTemp = takingChineseNumberRERules.findall(chText)
+        CHNumberStringListTemp = takingChineseDigitsMixRERules.findall(chText)
         #检查末尾百分之万分之问题
         CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
 
@@ -319,6 +369,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
             """
             看是不是符号。如果是，就记录。
             """
+            #TODO 记录数字digits part 的普通逻辑方法
             if chText[i] in CHINESE_SIGN_LIST:
 
 
@@ -486,11 +537,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     return finalResult
 
 
-DIGITS_CHAR_LIST = ['0','1', '2', '3', '4', '5', '6', '7', '8', '9']
-DIGITS_SIGN_LIST = ['-','+']
-DIGITS_CONNECTING_SIGN_LIST = ['.']
-DIGITS_PERCENT_STRING = '%'
-takingDigitsRERule = re.compile('(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}')
+
 
 def takeDigitsNumberFromString(textToExtract,percentConvert = False):
     digitsNumberStringList = takingDigitsRERule.findall(textToExtract)
@@ -515,6 +562,7 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
 if __name__=='__main__':
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
+    print(takeChineseNumberFromString('aaaa.3%万'))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
     print(takeChineseNumberFromString('百分之四百三十二万分之四三千分之五'))
 
