@@ -48,7 +48,7 @@ PURE_DIGITS_RE = re.compile('[0-9]')
 DIGITS_CHAR_LIST = ['0','1', '2', '3', '4', '5', '6', '7', '8', '9']
 DIGITS_SIGN_LIST = ['-','+']
 DIGITS_CONNECTING_SIGN_LIST = ['.']
-DIGITS_PERCENT_STRING = '%'
+DIGITS_PER_COUNTING_STRING_LIST = ['%','‰','‱']
 takingDigitsRERule = re.compile('(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}')
 
 def coreCHToDigits(chineseChars,simpilfy=None):
@@ -115,6 +115,10 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
         digitsChars = list(re.findall(takingDigitsRERule,chineseDigitsMixString))[0]
         if digitsChars.__contains__('%'):
             digitsChars = float(Decimal(digitsChars.replace('%', '')) / 100)
+        elif digitsChars.__contains__('‰'):
+            digitsChars = float(Decimal(digitsChars.replace('%', '')) / 1000)
+        elif digitsChars.__contains__('‱'):
+            digitsChars = float(Decimal(digitsChars.replace('%', '')) / 10000)
         else:
             """
             注意 .3 需要能自动转换成0.3
@@ -362,6 +366,10 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
         CHNumberStringList = []
         tempTotalChar = ''
         """
+        记录所有汉字数字的起始位置，用以看看前面有没有阿拉伯数字，防止混合出现
+        """
+        CHNumberStringInitIndex = []
+        """
         将字符串中所有中文数字列出来
         """
         i = 0
@@ -377,6 +385,11 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
                 如果 符号前面有数字  则 存到结果里面
                 """
                 if tempCHNumberChar != '':
+                    """
+                    看看之前有没有阿拉伯数字
+                    """
+                    # 记录起始位置
+                    CHNumberStringInitIndex.append(i - len(tempTotalChar))
                     if checkChineseNumberReasonable(tempTotalChar):
                         CHNumberStringList.append(tempTotalChar)
                         tempCHPercentChar = ''
@@ -411,6 +424,11 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
                 如果 百分之前面有数字  则 存到结果里面
                 """
                 if tempCHNumberChar != '':
+                    """
+                    看看之前有没有阿拉伯数字
+                    """
+                    # 记录起始位置
+                    CHNumberStringInitIndex.append(i - len(tempTotalChar))
                     if checkChineseNumberReasonable(tempTotalChar):
                         CHNumberStringList.append(tempTotalChar)
                         tempCHPercentChar = ''
@@ -466,6 +484,11 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
                 遇到第一个在字典里找不到的，且最终长度大于符号与连接符的。所有临时记录清空, 最终字符串被记录
                 """
                 if tempTotalChar.__len__()>len(tempCHPercentChar + tempCHConnectChar + tempCHSignChar):
+                    """
+                    看看之前有没有阿拉伯数字
+                    """
+                    # 记录起始位置
+                    CHNumberStringInitIndex.append(i - len(tempTotalChar))
                     if checkChineseNumberReasonable(tempTotalChar):
                         CHNumberStringList.append(tempTotalChar)
                         tempCHPercentChar = ''
@@ -487,6 +510,11 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
         将temp 清干净
         """
         if tempTotalChar.__len__() > len(tempCHPercentChar + tempCHConnectChar + tempCHSignChar):
+            """
+            看看之前有没有阿拉伯数字
+            """
+            # 记录起始位置
+            CHNumberStringInitIndex.append(i - len(tempTotalChar))
             if checkChineseNumberReasonable(tempTotalChar):
                 CHNumberStringList.append(tempTotalChar)
                 tempCHPercentChar = ''
@@ -500,6 +528,16 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
                 tempCHSignChar = ''
                 tempCHNumberChar = ''
                 tempTotalChar = ''
+
+        """
+        寻找汉字前面的阿拉伯数字，
+        """
+        for indexNumber in CHNumberStringInitIndex:
+            tempDigits = ''
+            if chText[indexNumber-1] in DIGITS_PER_COUNTING_STRING_LIST:
+                for digitsIndex in range(indexNumber-1,-1,-1):
+                    try:
+                        float()
 
 
     # """
