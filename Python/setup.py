@@ -6,7 +6,7 @@ from setuptools import setup,find_packages
 import os
 setup(
     name='chinese2digits',
-    version= '2.1.1',
+    version= '3.0.1',
     keywords = ("pip", "NLP","chinese","digits_number","number_transform"),
     description=(
         """最好的汉字数字(中文数字)-阿拉伯数字转换工具。包含"点二八"，"负百分之四十"等众多汉语表达方法。NLP，机器人工程必备！ The Best Tool of Chinese Number to Digits"""

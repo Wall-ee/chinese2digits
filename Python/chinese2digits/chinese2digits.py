@@ -108,94 +108,107 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
     """
     汉字数字切割 然后再进行识别
     """
-
-    chineseChars = list(re.findall(takingChineseNumberRERules,chineseDigitsMixString))[0]
-
+    #TODO  先将数字汉字切割 然后再整体处理
+    try:
+        chineseChars = list(re.findall(takingChineseNumberRERules,chineseDigitsMixString))[0]
+    except:
+        chineseChars = ''
     try:
         digitsChars = list(re.findall(takingDigitsRERule,chineseDigitsMixString))[0]
+    except:
+        digitsChars = ''
+    if digitsChars!= '':
         if digitsChars.__contains__('%'):
-            digitsChars = float(Decimal(digitsChars.replace('%', '')) / 100)
+            digitsPart = float(Decimal(digitsChars.replace('%', '')) / 100)
         elif digitsChars.__contains__('‰'):
-            digitsChars = float(Decimal(digitsChars.replace('%', '')) / 1000)
+            digitsPart = float(Decimal(digitsChars.replace('%', '')) / 1000)
         elif digitsChars.__contains__('‱'):
-            digitsChars = float(Decimal(digitsChars.replace('%', '')) / 10000)
+            digitsPart = float(Decimal(digitsChars.replace('%', '')) / 10000)
         else:
             """
             注意 .3 需要能自动转换成0.3
             """
-            digitsChars = float(digitsChars)
-    except:
-        digitsChars = 1
-    """
-    进行标准汉字字符串转换 例如 二千二  转换成二千零二
-    """
-    chineseChars = standardChNumberConvert(str(chineseChars))
-    #kaka
-    chineseCharsDotSplitList = []
-    chineseChars = str(chineseChars)
-    tempChineseChars = chineseChars
-
-
-    """
-    看有没有符号
-    """
-    sign = ''
-    for chars in tempChineseChars:
-        if CHINESE_SIGN_DICT.get(chars) is not None:
-            sign = CHINESE_SIGN_DICT.get(chars)
-            tempChineseChars = tempChineseChars.replace(chars, '')
-    """
-    防止没有循环完成就替换 报错
-    """
-    chineseChars = tempChineseChars
-    """
-    看有没有百分号
-    """
-    perCountingString = ''
-    for perCountingUnit in CHINESE_PER_COUNTING_STRING_LIST:
-        if perCountingUnit in chineseChars:
-            perCountingString = CHINESE_PER_COUNTING_DICT.get(perCountingUnit,'%')
-            chineseChars = chineseChars.replace(perCountingUnit,'')
-
-    """
-    小数点切割，看看是不是有小数点
-    """
-    for chars in list(CHINESE_CONNECTING_SIGN_DICT.keys()):
-        if chars in chineseChars:
-            chineseCharsDotSplitList = chineseChars.split(chars)
-
-    if chineseCharsDotSplitList.__len__()==0:
-        convertResult = coreCHToDigits(chineseChars,simpilfy)
+            digitsPart = float(digitsChars)
     else:
-        convertResult = ''
-        if chineseCharsDotSplitList[0] == '':
-            """
-            .01234 这种开头  用0 补位
-            """
-            convertResult = '0.'+ coreCHToDigits(chineseCharsDotSplitList[1],simpilfy)
+        digitsPart = 1
+
+    if chineseChars != '':
+        """
+        进行标准汉字字符串转换 例如 二千二  转换成二千零二
+        """
+        chineseChars = standardChNumberConvert(str(chineseChars))
+        #kaka
+        chineseCharsDotSplitList = []
+        chineseChars = str(chineseChars)
+        tempChineseChars = chineseChars
+
+
+        """
+        看有没有符号
+        """
+        sign = ''
+        for chars in tempChineseChars:
+            if CHINESE_SIGN_DICT.get(chars) is not None:
+                sign = CHINESE_SIGN_DICT.get(chars)
+                tempChineseChars = tempChineseChars.replace(chars, '')
+        """
+        防止没有循环完成就替换 报错
+        """
+        chineseChars = tempChineseChars
+        """
+        看有没有百分号
+        """
+        perCountingString = ''
+        for perCountingUnit in CHINESE_PER_COUNTING_STRING_LIST:
+            if perCountingUnit in chineseChars:
+                perCountingString = CHINESE_PER_COUNTING_DICT.get(perCountingUnit,'%')
+                chineseChars = chineseChars.replace(perCountingUnit,'')
+
+        """
+        小数点切割，看看是不是有小数点
+        """
+        for chars in list(CHINESE_CONNECTING_SIGN_DICT.keys()):
+            if chars in chineseChars:
+                chineseCharsDotSplitList = chineseChars.split(chars)
+
+        if chineseCharsDotSplitList.__len__()==0:
+            convertResult = coreCHToDigits(chineseChars,simpilfy)
         else:
-            convertResult = coreCHToDigits(chineseCharsDotSplitList[0],simpilfy) + '.' + coreCHToDigits(chineseCharsDotSplitList[1],simpilfy)
+            convertResult = ''
+            if chineseCharsDotSplitList[0] == '':
+                """
+                .01234 这种开头  用0 补位
+                """
+                convertResult = '0.'+ coreCHToDigits(chineseCharsDotSplitList[1],simpilfy)
+            else:
+                convertResult = coreCHToDigits(chineseCharsDotSplitList[0],simpilfy) + '.' + coreCHToDigits(chineseCharsDotSplitList[1],simpilfy)
 
-    convertResult = sign + convertResult
+        convertResult = sign + convertResult
 
-    if percentConvert == True:
-        if perCountingString == '%':
-            convertResult = float(Decimal(convertResult)/100)
-        elif perCountingString == '‰':
-            convertResult = float(Decimal(convertResult)/1000)
-        elif perCountingString == '‱':
-            convertResult = float(Decimal(convertResult)/10000)
-        """
-        最终结果要乘以数字part digits part
-        """
-        total = str(float(convertResult) * digitsChars)
+        if percentConvert == True:
+            if perCountingString == '%':
+                convertResult = float(Decimal(convertResult)/100)
+            elif perCountingString == '‰':
+                convertResult = float(Decimal(convertResult)/1000)
+            elif perCountingString == '‱':
+                convertResult = float(Decimal(convertResult)/10000)
+            """
+            最终结果要乘以数字part digits part
+            """
+            total = str(float(convertResult) * digitsPart)
+        else:
+            total = str(float(convertResult) * digitsPart) + perCountingString
     else:
-        total = str(float(convertResult) * digitsChars) + perCountingString
+        """
+        如果中文部分没有数值 ，取罗马数字部分
+        """
+        total = str(digitsPart)
     return total
 
 
 
 def checkChineseNumberReasonable(chNumber):
+    #todo 拆分汉字部分非单纯单位的组合型  例如 300三十五  而不是300万这种混合模式
     if chNumber.__len__()>0:
         """
         如果字符串包含数字,则返回 true  如果不包含数字 则进行下面的逻辑
@@ -326,7 +339,7 @@ def checkNumberSeg(chineseNumberList):
 
 
 
-def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',traditionalConvert= True):
+def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',traditionalConvert= True,*args,**kwargs):
     """
     :param chText: chinese string
     :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
@@ -347,197 +360,17 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     字符串 汉字数字字符串切割提取
     正则表达式方法
     """
-    if method == 'regex':
-        # CHNumberStringListTemp = takingChineseNumberRERules.findall(chText)
-        CHNumberStringListTemp = takingChineseDigitsMixRERules.findall(chText)
-        #检查末尾百分之万分之问题
-        CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
+    # CHNumberStringListTemp = takingChineseNumberRERules.findall(chText)
+    CHNumberStringListTemp = takingChineseDigitsMixRERules.findall(chText)
+    #检查末尾百分之万分之问题
+    CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
 
-        #检查合理性
-        CHNumberStringList= []
-        for tempText in CHNumberStringListTemp:
-            if checkChineseNumberReasonable(tempText):
-                CHNumberStringList.append(tempText)
-    else:
-        tempCHNumberChar = ''
-        tempCHSignChar = ''
-        tempCHConnectChar = ''
-        tempCHPercentChar = ''
-        CHNumberStringList = []
-        tempTotalChar = ''
-        """
-        记录所有汉字数字的起始位置，用以看看前面有没有阿拉伯数字，防止混合出现
-        """
-        CHNumberStringInitIndex = []
-        """
-        将字符串中所有中文数字列出来
-        """
-        i = 0
-        while i < chText.__len__():
-            """
-            看是不是符号。如果是，就记录。
-            """
-            #TODO 记录数字digits part 的普通逻辑方法
-            if chText[i] in CHINESE_SIGN_LIST:
+    #检查合理性
+    CHNumberStringList= []
+    for tempText in CHNumberStringListTemp:
+        if checkChineseNumberReasonable(tempText):
+            CHNumberStringList.append(tempText)
 
-
-                """
-                如果 符号前面有数字  则 存到结果里面
-                """
-                if tempCHNumberChar != '':
-                    """
-                    看看之前有没有阿拉伯数字
-                    """
-                    # 记录起始位置
-                    CHNumberStringInitIndex.append(i - len(tempTotalChar))
-                    if checkChineseNumberReasonable(tempTotalChar):
-                        CHNumberStringList.append(tempTotalChar)
-                        tempCHPercentChar = ''
-                        tempCHConnectChar = ''
-                        tempCHSignChar = ''
-                        tempCHNumberChar = ''
-                        tempTotalChar = ''
-                    else:
-                        tempCHPercentChar = ''
-                        tempCHConnectChar = ''
-                        tempCHSignChar = ''
-                        tempCHNumberChar = ''
-                        tempTotalChar = ''
-                """
-                如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
-                """
-                if tempCHSignChar != '':
-                    tempTotalChar = tempTotalChar.replace(tempCHSignChar, '')
-
-                tempCHSignChar = chText[i]
-                tempTotalChar = tempTotalChar + tempCHSignChar
-                i = i + 1
-                continue
-
-            """
-            不是字符是不是"百分之"。
-            """
-            if chText[i:(i + 3)] in CHINESE_PER_COUNTING_STRING_LIST:
-
-
-                """
-                如果 百分之前面有数字  则 存到结果里面
-                """
-                if tempCHNumberChar != '':
-                    """
-                    看看之前有没有阿拉伯数字
-                    """
-                    # 记录起始位置
-                    CHNumberStringInitIndex.append(i - len(tempTotalChar))
-                    if checkChineseNumberReasonable(tempTotalChar):
-                        CHNumberStringList.append(tempTotalChar)
-                        tempCHPercentChar = ''
-                        tempCHConnectChar = ''
-                        tempCHSignChar = ''
-                        tempCHNumberChar = ''
-                        tempTotalChar = ''
-                    else:
-                        tempCHPercentChar = ''
-                        tempCHConnectChar = ''
-                        tempCHSignChar = ''
-                        tempCHNumberChar = ''
-                        tempTotalChar = ''
-
-                """
-                如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
-                """
-                if tempCHPercentChar != '':
-                    tempTotalChar = tempTotalChar.replace(tempCHPercentChar, '')
-
-                tempCHPercentChar = chText[i:(i + 3)]
-                tempTotalChar = tempTotalChar + tempCHPercentChar
-                i = i + 3
-                continue
-            """
-            看是不是点
-            """
-            if chText[i] in CHINESE_CONNECTING_SIGN_LIST:
-                """
-                如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
-                """
-                if tempCHConnectChar != '':
-                    tempTotalChar = tempTotalChar.replace(tempCHConnectChar, '')
-
-                tempCHConnectChar = chText[i]
-                tempTotalChar = tempTotalChar + tempCHConnectChar
-                i = i + 1
-                continue
-
-            """
-            看是不是数字
-            """
-            if chText[i] in CHINESE_CHAR_LIST:
-                """
-                如果 在字典里找到，则记录该字符串
-                """
-                tempCHNumberChar = chText[i]
-                tempTotalChar = tempTotalChar + tempCHNumberChar
-                i = i + 1
-                continue
-            else:
-                """
-                遇到第一个在字典里找不到的，且最终长度大于符号与连接符的。所有临时记录清空, 最终字符串被记录
-                """
-                if tempTotalChar.__len__()>len(tempCHPercentChar + tempCHConnectChar + tempCHSignChar):
-                    """
-                    看看之前有没有阿拉伯数字
-                    """
-                    # 记录起始位置
-                    CHNumberStringInitIndex.append(i - len(tempTotalChar))
-                    if checkChineseNumberReasonable(tempTotalChar):
-                        CHNumberStringList.append(tempTotalChar)
-                        tempCHPercentChar = ''
-                        tempCHConnectChar = ''
-                        tempCHSignChar = ''
-                        tempCHNumberChar = ''
-                        tempTotalChar = ''
-                    else:
-                        tempCHPercentChar = ''
-                        tempCHConnectChar = ''
-                        tempCHSignChar = ''
-                        tempCHNumberChar = ''
-                        tempTotalChar = ''
-                """
-                遇到第一个在字典里找不到的，且最终长度小于符号与连接符的。所有临时记录清空,。
-                """
-                i = i + 1
-        """
-        将temp 清干净
-        """
-        if tempTotalChar.__len__() > len(tempCHPercentChar + tempCHConnectChar + tempCHSignChar):
-            """
-            看看之前有没有阿拉伯数字
-            """
-            # 记录起始位置
-            CHNumberStringInitIndex.append(i - len(tempTotalChar))
-            if checkChineseNumberReasonable(tempTotalChar):
-                CHNumberStringList.append(tempTotalChar)
-                tempCHPercentChar = ''
-                tempCHConnectChar = ''
-                tempCHSignChar = ''
-                tempCHNumberChar = ''
-                tempTotalChar = ''
-            else:
-                tempCHPercentChar = ''
-                tempCHConnectChar = ''
-                tempCHSignChar = ''
-                tempCHNumberChar = ''
-                tempTotalChar = ''
-
-        """
-        寻找汉字前面的阿拉伯数字，
-        """
-        for indexNumber in CHNumberStringInitIndex:
-            tempDigits = ''
-            if chText[indexNumber-1] in DIGITS_PER_COUNTING_STRING_LIST:
-                for digitsIndex in range(indexNumber-1,-1,-1):
-                    try:
-                        float()
 
 
     # """
