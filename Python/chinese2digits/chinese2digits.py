@@ -405,6 +405,7 @@ def checkNumberSeg(chineseNumberList):
     return newChineseNumberList
 
 
+#TODO 需要升级正则， 提供一个混合提取的正则表达式
 
 def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',traditionalConvert= True,*args,**kwargs):
     """
