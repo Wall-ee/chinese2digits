@@ -33,12 +33,28 @@ takingChineseNumberRERules = re.compile('(?:(?:(?:[百千万]分之[正负]{0,1}
                                         '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})'
                                         '|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}')
 #数字汉字混合提取的正则引擎
-takingChineseDigitsMixRERules = re.compile('(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}'
-                                           '(?:(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))'
-                                           '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-                                           '(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|'
-                                           '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-                                           '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})')
+# takingChineseDigitsMixRERules = re.compile('(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}'
+#                                            '(?:(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))'
+#                                            '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+#                                            '(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|'
+#                                            '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+#                                            '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})')
+#
+#
+# aaa = re.compile('(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}')
+#
+# bb = '(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})'
+
+takingChineseDigitsMixRERules = re.compile('(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|'
+                '(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})){0,1}'
+                '(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}'
+                '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+                '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})|'
+                '(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|'
+                '(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1}))'
+                '(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}'
+                '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+                '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}){0,1}')
 
 PURE_DIGITS_RE = re.compile('[0-9]')
 
@@ -49,7 +65,7 @@ DIGITS_CHAR_LIST = ['0','1', '2', '3', '4', '5', '6', '7', '8', '9']
 DIGITS_SIGN_LIST = ['-','+']
 DIGITS_CONNECTING_SIGN_LIST = ['.']
 DIGITS_PER_COUNTING_STRING_LIST = ['%','‰','‱']
-takingDigitsRERule = re.compile('(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}')
+takingDigitsRERule = re.compile('(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})')
 
 def coreCHToDigits(chineseChars,simpilfy=None):
     if simpilfy is None:
@@ -407,13 +423,13 @@ def checkNumberSeg(chineseNumberList):
 
 #TODO 需要升级正则， 提供一个混合提取的正则表达式
 
-def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,method = 'regex',traditionalConvert= True,*args,**kwargs):
+def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False,*args,**kwargs):
     """
     :param chText: chinese string
     :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
     :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
-    :param method: chinese number string cut engine. Default is regex. Other means cut using python code logic only
     :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
+    :param digitsNumberSwitch: Switch to convert the take pure digits number
     :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
     """
 
@@ -436,7 +452,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     #检查合理性
     CHNumberStringList= []
     for tempText in CHNumberStringListTemp:
-        resonableResult = checkChineseNumberReasonable(tempText,False)
+        resonableResult = checkChineseNumberReasonable(tempText,digitsNumberSwitch)
         if resonableResult != []:
             CHNumberStringList = CHNumberStringList + resonableResult
 
@@ -476,6 +492,18 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     return finalResult
 
 
+def takeNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= True,*args,**kwargs):
+    """
+    :param chText: chinese string
+    :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
+    :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
+    :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
+    :param digitsNumberSwitch: Switch to convert the take pure digits number
+    :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
+    """
+    finalResult = takeChineseNumberFromString(chText,simpilfy=simpilfy,percentConvert = percentConvert,traditionalConvert= traditionalConvert,digitsNumberSwitch= digitsNumberSwitch)
+    return finalResult
+
 
 
 def takeDigitsNumberFromString(textToExtract,percentConvert = False):
@@ -483,24 +511,33 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
     """
     最后检查有没有百分号
     """
-    """
-    看有没有百分号
-    """
-    if percentConvert is True:
-        for i in range(digitsNumberStringList.__len__()):
-            if digitsNumberStringList[i].__contains__('%'):
-                digitsNumberStringList[i] = str(Decimal(digitsNumberStringList[i].replace('%', '')) / 100)
+    digitsStringList = []
+    replacedText = textToExtract
+    if digitsNumberStringList.__len__()>0:
+        digitsStringList = list(map(lambda x:chineseToDigits(x,percentConvert=percentConvert),digitsNumberStringList))
+        tupleToReplace = list(zip(digitsNumberStringList,digitsStringList,list(map(len,digitsNumberStringList))))
+
+
+        """
+        按照提取出的中文数字字符串长短排序，然后替换。防止百分之二十八 ，二十八，这样的先把短的替换完了的情况
+        """
+        tupleToReplace = sorted(tupleToReplace, key=lambda x: -x[2])
+        for i in range(tupleToReplace.__len__()):
+            replacedText = replacedText.replace(tupleToReplace[i][0],tupleToReplace[i][1])
 
     finalResult = {
         'inputText':textToExtract,
-        'digitsNumberStringList':digitsNumberStringList
+        'replacedText':replacedText,
+        'digitsNumberStringList':digitsNumberStringList,
+        'digitsStringList':digitsStringList
     }
-
     return finalResult
 
 if __name__=='__main__':
+    #混合提取
+    print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%'))
     #将百分比转为小数
-    # print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
+    print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     print(takeChineseNumberFromString('啊啦啦啦300十万你好我20万.3%万'))
     print(takeChineseNumberFromString('aaaa.3%万'))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题

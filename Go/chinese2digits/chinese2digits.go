@@ -51,81 +51,90 @@ var PURE_DIGITS_RE,regError3 = regexp.compile(`[0-9]`)
 var takingDigitsRERule,regError4 = regexp.compile(`(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}`)
 
 
-func checkChineseNumberReasonable(chNumber string) bool {
+func checkChineseNumberReasonable(chNumber string,digitsNumberSwitch= False) bool {
+    #TODO  check checkChineseNumberReasonabl
+    #TODO 混合提取函数
 	chineseChars := []rune(chNumber)
-	      """
-        先看数字部分是不是合理
-        """
-        try:
-            digitsNumberPart = re.findall(takingDigitsRERule,chNumber)[0]
+    //"""
+    //先看数字部分是不是合理
+    //"""
+    //"""
+    //汉字数字切割 然后再进行识别
+    //"""
+    chPartRegMatchResult := takingChineseNumberRERules.FindAllStringSubmatch(chineseCharsToTrans, -1)
 
-        except:
-            digitsNumberPart = ''
+    chNumberPart := ""
+    if len(chPartRegMatchResult)>0{
+        chNumberPart = chPartRegMatchResult[0][0]
+    }
+    digitsPartRegMatchResult := takingDigitsRERule.FindAllStringSubmatch(chineseCharsToTrans, -1)
+    digitsNumberPart := ""
+    if len(digitsPartRegMatchResult)>0{
+        digitsNumberPart = digitsPartRegMatchResult[0][0]
+    }
 
-        try:
-            chNumberPart = re.findall(takingChineseNumberRERules,chNumber)[0]
-        except:
-            chNumberPart = ''
-
-        if digitsNumberPart != '':
+    if digitsNumberPart != ""{
+        //"""
+        //罗马数字合理部分检查
+        //"""
+        if re.findall(PURE_DIGITS_RE, digitsNumberPart).__len__() > 0:
             """
-            罗马数字合理部分检查
+            如果数字有长度，看看汉字是不是纯单位，如果是  返回结果，如果不是 拆分成2个 返回
             """
-            if re.findall(PURE_DIGITS_RE, digitsNumberPart).__len__() > 0:
-                """
-                如果数字有长度，看看汉字是不是纯单位，如果是  返回结果，如果不是 拆分成2个 返回
-                """
-                digitsNumberReasonable = True
-            else:
-                digitsNumberReasonable = False
+            digitsNumberReasonable = True
         else:
             digitsNumberReasonable = False
 
-        chNumberReasonable = False
-        if chNumberPart !='':
-            """
-            如果汉字长度大于0 则判断是不是 万  千  单字这种
-            """
-            for i in CHINESE_PURE_NUMBER_LIST:
-                if i in chNumberPart:
-                    chNumberReasonable = True
-                    break
-        if chNumberPart !='':
-            #中文部分合理
-            if chNumberReasonable is True:
-                #罗马部分也合理 则为mix双合理模式 300三十万
-                if digitsNumberReasonable is True:
-                    # 看看结果需不需要纯罗马数字结果
-                    if digitsNumberSwitch is False:
-                        #只返回中文部分
-                        result = [chNumberPart]
-                    else:
-                        #返回双部分
-                        result = [digitsNumberPart,chNumberPart]
-                #罗马部分不合理，中文合理  .三百万这种
-                else:
+    }else{
+        digitsNumberReasonable = False
+    }
+
+
+    chNumberReasonable = False
+    if chNumberPart !='':
+        """
+        如果汉字长度大于0 则判断是不是 万  千  单字这种
+        """
+        for i in CHINESE_PURE_NUMBER_LIST:
+            if i in chNumberPart:
+                chNumberReasonable = True
+                break
+    if chNumberPart !='':
+        #中文部分合理
+        if chNumberReasonable is True:
+            #罗马部分也合理 则为mix双合理模式 300三十万
+            if digitsNumberReasonable is True:
+                # 看看结果需不需要纯罗马数字结果
+                if digitsNumberSwitch is False:
+                    #只返回中文部分
                     result = [chNumberPart]
-            else:
-                #中文部分不合理，说明是单位这种
-                #看看罗马部分是否合理
-                if digitsNumberReasonable is True:
-                    #罗马部分合理 说明是 mix 合理模式  300万这种
-                    result = [chNumber]
                 else:
-                    #罗马部分也不合理  双不合理模式  空结果
-                    result = []
-        #汉字部分啥都没有，看看罗马数字部分
+                    #返回双部分
+                    result = [digitsNumberPart,chNumberPart]
+            #罗马部分不合理，中文合理  .三百万这种
+            else:
+                result = [chNumberPart]
         else:
-            # 看看结果需不需要纯罗马数字结果
-            if digitsNumberSwitch is False:
-                result = []
+            #中文部分不合理，说明是单位这种
+            #看看罗马部分是否合理
+            if digitsNumberReasonable is True:
+                #罗马部分合理 说明是 mix 合理模式  300万这种
+                result = [chNumber]
             else:
-                #需要纯罗马部分，检查罗马数字，罗马部分合理，返回罗马部分
-                if digitsNumberReasonable is True:
-                    result = [digitsNumberPart]
-                #罗马部分不合理  返回空
-                else:
-                    result = []
+                #罗马部分也不合理  双不合理模式  空结果
+                result = []
+    #汉字部分啥都没有，看看罗马数字部分
+    else:
+        # 看看结果需不需要纯罗马数字结果
+        if digitsNumberSwitch is False:
+            result = []
+        else:
+            #需要纯罗马部分，检查罗马数字，罗马部分合理，返回罗马部分
+            if digitsNumberReasonable is True:
+                result = [digitsNumberPart]
+            #罗马部分不合理  返回空
+            else:
+                result = []
 
 	if len(chNumber) > 0 {
 		//如果汉字长度大于0 则判断是不是 万  千  单字这种
@@ -305,7 +314,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
     }
     digitsPartRegMatchResult := takingDigitsRERule.FindAllStringSubmatch(chineseCharsToTrans, -1)
     digitsPartString := ""
-    if len(chPartRegMatchResult)>0{
+    if len(digitsPartRegMatchResult)>0{
         digitsPartString = digitsPartRegMatchResult[0][0]
     }
 
