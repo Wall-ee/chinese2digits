@@ -94,7 +94,11 @@ def coreCHToDigits(chineseChars,simpilfy=None):
                     countingUnit = max(countingUnitFromString) * val
             else:
                 total = total + countingUnit * val
-        total = str(total)
+        #如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
+        if total == 0 and countingUnit>0:
+            total = str(countingUnit)
+        else:
+            total = str(total)
     else:
         total=''
         for i in chineseChars:
@@ -108,7 +112,6 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
     """
     汉字数字切割 然后再进行识别
     """
-    #TODO  先将数字汉字切割 然后再整体处理
     try:
         chineseChars = list(re.findall(takingChineseNumberRERules,chineseDigitsMixString))[0]
     except:
@@ -202,27 +205,91 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
         """
         如果中文部分没有数值 ，取罗马数字部分
         """
-        total = str(digitsPart)
+        if percentConvert == True:
+            total = str(digitsPart)
+        else:
+            total = digitsChars
     return total
 
 
 
-def checkChineseNumberReasonable(chNumber):
-    #todo 拆分汉字部分非单纯单位的组合型  例如 300三十五  而不是300万这种混合模式
+def checkChineseNumberReasonable(chNumber,digitsNumberSwitch= False):
+    result = []
     if chNumber.__len__()>0:
         """
-        如果字符串包含数字,则返回 true  如果不包含数字 则进行下面的逻辑
+        先看数字部分是不是合理
         """
-        if re.findall(PURE_DIGITS_RE,chNumber).__len__()>0:
-            return True
-        else:
+        try:
+            digitsNumberPart = re.findall(takingDigitsRERule,chNumber)[0]
+
+        except:
+            digitsNumberPart = ''
+
+        try:
+            chNumberPart = re.findall(takingChineseNumberRERules,chNumber)[0]
+        except:
+            chNumberPart = ''
+
+        if digitsNumberPart != '':
             """
-            如果数字没有长度，如果汉字长度大于0 则判断是不是 万  千  单字这种
+            罗马数字合理部分检查
+            """
+            if re.findall(PURE_DIGITS_RE, digitsNumberPart).__len__() > 0:
+                """
+                如果数字有长度，看看汉字是不是纯单位，如果是  返回结果，如果不是 拆分成2个 返回
+                """
+                digitsNumberReasonable = True
+            else:
+                digitsNumberReasonable = False
+        else:
+            digitsNumberReasonable = False
+
+        chNumberReasonable = False
+        if chNumberPart !='':
+            """
+            如果汉字长度大于0 则判断是不是 万  千  单字这种
             """
             for i in CHINESE_PURE_NUMBER_LIST:
-                if i in chNumber:
-                    return True
-    return False
+                if i in chNumberPart:
+                    chNumberReasonable = True
+                    break
+        if chNumberPart !='':
+            #中文部分合理
+            if chNumberReasonable is True:
+                #罗马部分也合理 则为mix双合理模式 300三十万
+                if digitsNumberReasonable is True:
+                    # 看看结果需不需要纯罗马数字结果
+                    if digitsNumberSwitch is False:
+                        #只返回中文部分
+                        result = [chNumberPart]
+                    else:
+                        #返回双部分
+                        result = [digitsNumberPart,chNumberPart]
+                #罗马部分不合理，中文合理  .三百万这种
+                else:
+                    result = [chNumberPart]
+            else:
+                #中文部分不合理，说明是单位这种
+                #看看罗马部分是否合理
+                if digitsNumberReasonable is True:
+                    #罗马部分合理 说明是 mix 合理模式  300万这种
+                    result = [chNumber]
+                else:
+                    #罗马部分也不合理  双不合理模式  空结果
+                    result = []
+        #汉字部分啥都没有，看看罗马数字部分
+        else:
+            # 看看结果需不需要纯罗马数字结果
+            if digitsNumberSwitch is False:
+                result = []
+            else:
+                #需要纯罗马部分，检查罗马数字，罗马部分合理，返回罗马部分
+                if digitsNumberReasonable is True:
+                    result = [digitsNumberPart]
+                #罗马部分不合理  返回空
+                else:
+                    result = []
+    return result
 
 """
 繁体简体转换 及  单位  特殊字符转换 两千变二千
@@ -368,9 +435,9 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,metho
     #检查合理性
     CHNumberStringList= []
     for tempText in CHNumberStringListTemp:
-        if checkChineseNumberReasonable(tempText):
-            CHNumberStringList.append(tempText)
-
+        resonableResult = checkChineseNumberReasonable(tempText,False)
+        if resonableResult != []:
+            CHNumberStringList = CHNumberStringList + resonableResult
 
 
     # """
@@ -432,7 +499,8 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
 
 if __name__=='__main__':
     #将百分比转为小数
-    print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
+    # print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
+    print(takeChineseNumberFromString('啊啦啦啦300十万你好我20万.3%万'))
     print(takeChineseNumberFromString('aaaa.3%万'))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
     print(takeChineseNumberFromString('百分之四百三十二万分之四三千分之五'))
