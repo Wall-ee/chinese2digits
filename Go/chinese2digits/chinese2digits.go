@@ -36,16 +36,16 @@ var takingChineseNumberRERules, regError1 = regexp.Compile(`(?:(?:(?:[百千万]
 	`(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}`)
 
 //数字汉字混合提取的正则引擎
-var takingChineseDigitsMixRERules, regError2 = regexp.compile(`(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}` +
+var takingChineseDigitsMixRERules, regError2 = regexp.Compile(`(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}` +
 	`(?:(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))` +
 	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
 	`(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|` +
 	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
 	`(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})`)
 
-var PURE_DIGITS_RE, regError3 = regexp.compile(`[0-9]`)
+var PURE_DIGITS_RE, regError3 = regexp.Compile(`[0-9]`)
 
-var takingDigitsRERule, regError4 = regexp.compile(`(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}`)
+var takingDigitsRERule, regError4 = regexp.Compile(`(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}`)
 
 func checkChineseNumberReasonable(chNumber string, opt ...bool) []string {
 
@@ -320,6 +320,8 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 		digitsPartString = digitsPartRegMatchResult[0][0]
 	}
 
+	finalTotal := ""
+
 	digitsPart := float32(1.0)
 	if digitsPartString != "" {
 		digitsPart = convertDigitsStringToFloat(digitsPartString)
@@ -406,7 +408,6 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 
 		convertResult = sign + convertResult
 
-		finalTotal := ""
 		floatResult, err := strconv.ParseFloat(convertResult, 32)
 		if err != nil {
 			panic(err)
@@ -709,6 +710,8 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 		method = "regex"
 	}
 
+	digitsNumberSwitch := false
+
 	//"""
 	//简体转换开关
 	//"""
@@ -716,196 +719,33 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 
 	convertedString := traditionalTextConvertFunc(chTextString, traditionalConvert)
 
-	if method == "regex" {
-		//正则引擎
-		if regError1 != nil {
-			fmt.Println(regError)
-		}
-		regMatchResult := takingChineseNumberRERules.FindAllStringSubmatch(convertedString, -1)
+	//正则引擎
+	if regError1 != nil {
+		fmt.Println(regError1)
+	}
+	regMatchResult := takingChineseNumberRERules.FindAllStringSubmatch(convertedString, -1)
 
-		tempText := ""
-		CHNumberStringListTemp := []string{}
-		for i := 0; i < len(regMatchResult); i++ {
-			tempText = regMatchResult[i][0]
-			CHNumberStringListTemp = append(CHNumberStringListTemp, tempText)
-		}
+	tempText := ""
+	CHNumberStringListTemp := []string{}
+	for i := 0; i < len(regMatchResult); i++ {
+		tempText = regMatchResult[i][0]
+		CHNumberStringListTemp = append(CHNumberStringListTemp, tempText)
+	}
 
-		// #检查末尾百分之万分之问题
-		CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
+	// #检查末尾百分之万分之问题
+	CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
 
-		//检查合理性
-		for i := 0; i < len(CHNumberStringListTemp); i++ {
-			// fmt.Println(aa[i])
+	//检查合理性
+	for i := 0; i < len(CHNumberStringListTemp); i++ {
+		// fmt.Println(aa[i])
 
-			tempText = CHNumberStringListTemp[i]
-			if checkChineseNumberReasonable(tempText) {
-				CHNumberStringList = append(CHNumberStringList, tempText)
-			}
-			// CHNumberStringList = append(CHNumberStringList, regMatchResult[i][0])
+		tempText = CHNumberStringListTemp[i]
+		resonableResult := checkChineseNumberReasonable(tempText, digitsNumberSwitch)
+		if len(resonableResult) > 0 {
+			CHNumberStringList = append(CHNumberStringList, resonableResult...)
 		}
 
-	} else {
-		//普通引擎
-		//"""
-		//将字符串中所有中文数字列出来
-		//"""
-		chText := []rune(convertedString)
-		for i := 0; i < len(chText); i++ {
-			//"""
-			//看是不是符号。如果是，就记录。
-			//"""
-			charToGet := string(chText[i])
-			_, exists := chineseSignDict[charToGet]
-			if exists {
-				//"""
-				//如果 符号前面有数字  则 存到结果里面
-				//"""
-				if tempCHNumberChar != "" {
-					if checkChineseNumberReasonable(tempTotalChar) {
-						CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-						tempCHPercentChar = ""
-						tempCHConnectChar = ""
-						tempCHSignChar = ""
-						tempCHNumberChar = ""
-						tempTotalChar = ""
-					} else {
-						tempCHPercentChar = ""
-						tempCHConnectChar = ""
-						tempCHSignChar = ""
-						tempCHNumberChar = ""
-						tempTotalChar = ""
-					}
-
-				}
-				//"""
-				//如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
-				//"""
-				if tempCHSignChar != "" {
-					tempTotalChar = strings.Replace(tempTotalChar, tempCHSignChar, "", -1)
-				}
-
-				tempCHSignChar = string(chText[i])
-				tempTotalChar = tempTotalChar + tempCHSignChar
-				continue
-
-			}
-			//"""
-			//不是字符是不是"百分之"。
-			//"""
-			if (len(chText) - i) >= 3 {
-				if isExistItem(string(chText[i:(i+3)]), CHINESE_PER_COUNTING_STRING_LIST) > -1 {
-					//"""
-					//如果 百分之前面有数字  则 存到结果里面
-					//"""
-					if tempCHNumberChar != "" {
-						if checkChineseNumberReasonable(tempTotalChar) {
-							CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-							tempCHPercentChar = ""
-							tempCHConnectChar = ""
-							tempCHSignChar = ""
-							tempCHNumberChar = ""
-							tempTotalChar = ""
-						} else {
-							tempCHPercentChar = ""
-							tempCHConnectChar = ""
-							tempCHSignChar = ""
-							tempCHNumberChar = ""
-							tempTotalChar = ""
-						}
-					}
-					//"""
-					//如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
-					//"""
-					if tempCHPercentChar != "" {
-						tempTotalChar = strings.Replace(tempTotalChar, tempCHPercentChar, "", -1)
-					}
-
-					tempCHPercentChar = string(chText[i:(i + 3)])
-					tempTotalChar = tempTotalChar + tempCHPercentChar
-					i = i + 2 //下次循环会默认加+1 所以要小心 +2
-					continue
-
-				}
-			}
-
-			//"""
-			//看是不是点
-			//"""
-			charToGet = string(chText[i])
-			_, exists = chineseConnectingSignDict[charToGet]
-			if exists {
-				//"""
-				//如果 前一个符号赋值前，临时符号不为空，则把之前totalchar里面的符号替换为空字符串
-				//"""
-				if tempCHConnectChar != "" {
-					tempTotalChar = strings.Replace(tempTotalChar, tempCHConnectChar, "", -1)
-				}
-				tempCHConnectChar = string(chText[i])
-				tempTotalChar = tempTotalChar + tempCHConnectChar
-				continue
-
-			}
-
-			//"""
-			//看是不是数字
-			//"""
-			charToGet = string(chText[i])
-			_, exists = chineseCharNumberDict[charToGet]
-			if exists {
-				//"""
-				//如果 在字典里找到，则记录该字符串
-				//"""
-				tempCHNumberChar = string(chText[i])
-				tempTotalChar = tempTotalChar + tempCHNumberChar
-				continue
-
-			} else {
-				//"
-				//遇到第一个在字典里找不到的，且最终长度大于符号与连接符的。所有临时记录清空, 最终字符串被记录
-				//""
-				if len(tempTotalChar) > len(tempCHPercentChar+tempCHConnectChar+tempCHSignChar) {
-					if checkChineseNumberReasonable(tempTotalChar) {
-						CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-						tempCHPercentChar = ""
-						tempCHConnectChar = ""
-						tempCHSignChar = ""
-						tempCHNumberChar = ""
-						tempTotalChar = ""
-					} else {
-						tempCHPercentChar = ""
-						tempCHConnectChar = ""
-						tempCHSignChar = ""
-						tempCHNumberChar = ""
-						tempTotalChar = ""
-					}
-				}
-
-				//"
-				//遇到第一个在字典里找不到的，且最终长度小于符号与连接符的。所有临时记录清空,。
-				//""
-			}
-
-		}
-		//"""
-		//将temp 清干净
-		//"""
-		if len(tempTotalChar) > len(tempCHPercentChar+tempCHConnectChar+tempCHSignChar) {
-			if checkChineseNumberReasonable(tempTotalChar) {
-				CHNumberStringList = append(CHNumberStringList, tempTotalChar)
-				tempCHPercentChar = ""
-				tempCHConnectChar = ""
-				tempCHSignChar = ""
-				tempCHNumberChar = ""
-				tempTotalChar = ""
-			} else {
-				tempCHPercentChar = ""
-				tempCHConnectChar = ""
-				tempCHSignChar = ""
-				tempCHNumberChar = ""
-				tempTotalChar = ""
-			}
-		}
-
+		// CHNumberStringList = append(CHNumberStringList, regMatchResult[i][0])
 	}
 
 	//"""
