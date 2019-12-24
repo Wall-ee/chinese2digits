@@ -54,7 +54,7 @@ func checkChineseNumberReasonable(chNumber string, opt ...bool) []string {
 		digitsNumberSwitch = opt[0]
 	}
 	//#TODO 混合提取函数
-	chineseChars := []rune(chNumber)
+	// chineseChars := []rune(chNumber)
 	//"""
 	//先看数字部分是不是合理
 	//"""
@@ -262,9 +262,9 @@ func CoreCHToDigits(chineseCharsToTrans string, simpilfy interface{}) string {
 	return total
 }
 
-func convertDigitsStringToFloat(digitsString string) float32 {
+func convertDigitsStringToFloat(digitsString string) float64 {
 	perCountingString := ""
-	convertResult := ""
+	convertResult := digitsString
 	for i := 0; i < len(CHINESE_PER_COUNTING_STRING_LIST); i++ {
 		if strings.Contains(digitsString, CHINESE_PER_COUNTING_STRING_LIST[i]) {
 			value, exists := CHINESE_PER_COUNTING_DICT[string(CHINESE_PER_COUNTING_STRING_LIST[i])]
@@ -277,26 +277,20 @@ func convertDigitsStringToFloat(digitsString string) float32 {
 		}
 	}
 
-	var finalTotal float32
+	var finalTotal float64
 	floatResult, err := strconv.ParseFloat(convertResult, 32)
 	if err != nil {
 		panic(err)
 	} else {
-		//看小数点后面有几位，如果小数点右边有数字 则手动保留一定的位数
-		convertResultDotSplitList := strings.Split(convertResult, ".")
-		rightOfConvertResultDotString := ""
-		if len(convertResultDotSplitList) > 1 {
-			rightOfConvertResultDotString = string(convertResultDotSplitList[1])
-		}
 		switch perCountingString {
 		case "%":
-			finalTotal = float32(floatResult) / float32(100)
+			finalTotal = floatResult / 100
 		case "‰":
-			finalTotal = float32(floatResult) / float32(1000)
+			finalTotal = floatResult / 1000
 		case "‱":
-			finalTotal = float32(floatResult) / float32(10000)
+			finalTotal = floatResult / 10000
 		default:
-			finalTotal = float32(floatResult)
+			finalTotal = floatResult
 		}
 	}
 	return finalTotal
@@ -322,7 +316,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 
 	finalTotal := ""
 
-	digitsPart := float32(1.0)
+	digitsPart := 1.0
 	if digitsPartString != "" {
 		digitsPart = convertDigitsStringToFloat(digitsPartString)
 	}
@@ -421,13 +415,13 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 				}
 				switch perCountingString {
 				case "%":
-					finalTotal = strconv.FormatFloat(digitsPart*float32(floatResult)/float32(100), 'f', (len(rightOfConvertResultDotString) + 2), 32)
+					finalTotal = strconv.FormatFloat(digitsPart*floatResult/100, 'f', (len(rightOfConvertResultDotString) + 2), 32)
 				case "‰":
-					finalTotal = strconv.FormatFloat(digitsPart*float32(floatResult)/1000, 'f', (len(rightOfConvertResultDotString) + 3), 32)
+					finalTotal = strconv.FormatFloat(digitsPart*floatResult/1000, 'f', (len(rightOfConvertResultDotString) + 3), 32)
 				case "‱":
-					finalTotal = strconv.FormatFloat(digitsPart*float32(floatResult)/10000, 'f', (len(rightOfConvertResultDotString) + 4), 32)
+					finalTotal = strconv.FormatFloat(digitsPart*floatResult/10000, 'f', (len(rightOfConvertResultDotString) + 4), 32)
 				default:
-					finalTotal = strconv.FormatFloat(digitsPart*float32(floatResult), 'f', -1, 32)
+					finalTotal = strconv.FormatFloat(digitsPart*floatResult, 'f', -1, 32)
 				}
 				// switch perCountingString {
 				// case "%":
@@ -665,12 +659,7 @@ func checkNumberSeg(chineseNumberList []string) []string {
 // TakeChineseNumberFromString 将句子中的汉子数字提取的整体函数
 func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interface{} {
 
-	tempCHNumberChar := ""
-	tempCHSignChar := ""
-	tempCHConnectChar := ""
-	tempCHPercentChar := ""
 	CHNumberStringList := []string{}
-	tempTotalChar := ""
 
 	//默认参数设置
 	if len(opt) > 4 {
@@ -680,37 +669,34 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	var simpilfy interface{}
 	var percentConvert bool
 	var traditionalConvert bool
-	var method interface{}
+	digitsNumberSwitch := false
 
 	switch len(opt) {
 	case 1:
 		simpilfy = opt[0]
 		percentConvert = true
 		traditionalConvert = true
-		method = "regex"
+		digitsNumberSwitch = false
 	case 2:
 		simpilfy = opt[0]
 		percentConvert = opt[1].(bool)
 		traditionalConvert = true
-		method = "regex"
+		digitsNumberSwitch = false
 	case 3:
 		simpilfy = opt[0]
 		percentConvert = opt[1].(bool)
 		traditionalConvert = opt[2].(bool)
-		method = "regex"
+		digitsNumberSwitch = false
 	case 4:
 		simpilfy = opt[0]
 		percentConvert = opt[1].(bool)
 		traditionalConvert = opt[2].(bool)
-		method = opt[3]
+		digitsNumberSwitch = opt[3].(bool)
 	default:
 		simpilfy = "auto"
 		percentConvert = true
 		traditionalConvert = true
-		method = "regex"
 	}
-
-	digitsNumberSwitch := false
 
 	//"""
 	//简体转换开关
@@ -723,7 +709,7 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	if regError1 != nil {
 		fmt.Println(regError1)
 	}
-	regMatchResult := takingChineseNumberRERules.FindAllStringSubmatch(convertedString, -1)
+	regMatchResult := takingChineseDigitsMixRERules.FindAllStringSubmatch(convertedString, -1)
 
 	tempText := ""
 	CHNumberStringListTemp := []string{}
@@ -784,6 +770,49 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	}
 	return finalResult
 
+}
+
+func TakeNumberFromString(chTextString string, opt ...interface{}) interface{} {
+
+	//默认参数设置
+	if len(opt) > 4 {
+		panic("too many arguments")
+	}
+
+	var simpilfy interface{}
+	var percentConvert bool
+	var traditionalConvert bool
+	digitsNumberSwitch := true
+
+	switch len(opt) {
+	case 1:
+		simpilfy = opt[0]
+		percentConvert = true
+		traditionalConvert = true
+		digitsNumberSwitch = true
+	case 2:
+		simpilfy = opt[0]
+		percentConvert = opt[1].(bool)
+		traditionalConvert = true
+		digitsNumberSwitch = true
+	case 3:
+		simpilfy = opt[0]
+		percentConvert = opt[1].(bool)
+		traditionalConvert = opt[2].(bool)
+		digitsNumberSwitch = true
+	case 4:
+		simpilfy = opt[0]
+		percentConvert = opt[1].(bool)
+		traditionalConvert = opt[2].(bool)
+		digitsNumberSwitch = opt[3].(bool)
+	default:
+		simpilfy = "auto"
+		percentConvert = true
+		traditionalConvert = true
+	}
+
+	finalResult := TakeChineseNumberFromString(chTextString, simpilfy, percentConvert, traditionalConvert, digitsNumberSwitch)
+	return finalResult
 }
 
 // func main() {
