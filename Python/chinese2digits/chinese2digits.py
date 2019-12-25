@@ -535,10 +535,10 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
 
 if __name__=='__main__':
     #混合提取
-    print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%'))
+    print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万'))
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
-    print(takeChineseNumberFromString('啊啦啦啦300十万你好我20万.3%万'))
+    print(takeChineseNumberFromString('啊啦啦啦300十万你好我20万.3%万哦哦哦300万'))
     print(takeChineseNumberFromString('aaaa.3%万'))
     #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
     print(takeChineseNumberFromString('百分之四百三十二万分之四三千分之五'))
