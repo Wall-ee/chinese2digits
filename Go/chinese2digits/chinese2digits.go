@@ -582,7 +582,7 @@ func standardChNumberConvert(chNumberString string) string {
 				newChNumberStringList = "一" + string(chNumberStringList)
 			} else {
 				// # 如果没有左边计数数字 插入1
-				if isExistItem(chNumberStringList[(tenNumberIndex-1)], CHINESE_PURE_NUMBER_LIST) == -1 {
+				if isExistItem(string(chNumberStringList[(tenNumberIndex-1)]), CHINESE_PURE_NUMBER_LIST) == -1 {
 					newChNumberStringList = string(chNumberStringList[:tenNumberIndex]) + "一" + string(chNumberStringList[tenNumberIndex:])
 				}
 			}

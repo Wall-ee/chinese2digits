@@ -14,6 +14,7 @@ import (
 func main() {
 	fmt.Println("输入：负百分之点二八你好啊三五四百分之三五是不是点伍零百分之负六十五点二八")
 	fmt.Println("输出：TakeChineseNumberFromString 方法")
+	fmt.Println(chinese2digits.TakeNumberFromString("三十万"))
 	fmt.Println(chinese2digits.TakeNumberFromString("十万啦啦啦300万nihao400十五点八"))
 	fmt.Println(chinese2digits.TakeChineseNumberFromString("百分之四百三十二万分之四三千分之五"))
 	fmt.Println(chinese2digits.TakeChineseNumberFromString("llalala万三威风威风千四五", true, false))
