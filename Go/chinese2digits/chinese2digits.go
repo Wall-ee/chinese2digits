@@ -36,12 +36,25 @@ var takingChineseNumberRERules, regError1 = regexp.Compile(`(?:(?:(?:[百千万]
 	`(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}`)
 
 //数字汉字混合提取的正则引擎
-var takingChineseDigitsMixRERules, regError2 = regexp.Compile(`(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}` +
-	`(?:(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))` +
+// var takingChineseDigitsMixRERules, regError2 = regexp.Compile(`(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}` +
+// 	`(?:(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))` +
+// 	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
+// 	`(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|` +
+// 	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
+// 	`(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})`)
+// mac 系统对于下面的正则会报错  还在找原因
+//runtime error: invalid memory address or nil pointer dereference [signal SIGSEGV: segmentation violation]
+//Unable to propogate EXC_BAD_ACCESS signal to target process and panic (see https://github.com/go-delve/delve/issues/852)
+var takingChineseDigitsMixRERules, regError2 = regexp.Compile(`(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|` +
+	`(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})){0,1}` +
+	`(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}` +
 	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
-	`(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|` +
+	`(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})|` +
+	`(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|` +
+	`(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1}))` +
+	`(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}` +
 	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
-	`(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})`)
+	`(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}){0,1}`)
 
 var PURE_DIGITS_RE, regError3 = regexp.Compile(`[0-9]`)
 
@@ -399,7 +412,10 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 			}
 
 		}
-
+		//如果转换结果为空字符串 则为百分之10 这种
+		if convertResult == "" {
+			convertResult = "1"
+		}
 		convertResult = sign + convertResult
 
 		floatResult, err := strconv.ParseFloat(convertResult, 32)
@@ -482,6 +498,7 @@ var SPECIAL_NUMBER_CHAR_DICT = map[string]string{"两": "二", "俩": "二"}
 var CHINESE_PURE_NUMBER_LIST = []string{"幺", "一", "二", "两", "三", "四", "五", "六", "七", "八", "九", "十", "零"}
 
 var CHINESE_PER_COUNTING_STRING_LIST = []string{"百分之", "千分之", "万分之"}
+var CHINESE_SIGN_LIST = []string{"正", "负", "+", "-"}
 var CHINESE_PER_COUNTING_DICT = map[string]string{"百分之": "%", "千分之": "‰", "万分之": "‱"}
 
 func isExistItem(value interface{}, array interface{}) int {
@@ -656,6 +673,30 @@ func checkNumberSeg(chineseNumberList []string) []string {
 	return newChineseNumberList
 }
 
+//检查初次提取的汉字数字是正负号是否切分正确
+func checkSignSeg(chineseNumberList []string) []string {
+	newChineseNumberList := []string{}
+	tempSign := ""
+	for i := 0; i < len(chineseNumberList); i++ {
+		// #新字符串 需要加上上一个字符串 最后1位的判断结果
+		newChNumberString := tempSign + chineseNumberList[i]
+		tempChineseNumberList := []rune(newChNumberString)
+		if len(tempChineseNumberList) > 1 {
+			lastString := string(tempChineseNumberList[len(tempChineseNumberList)-1:])
+			// #如果最后1位是百分比 那么本字符去掉最后三位  下一个数字加上最后1位
+			if isExistItem(lastString, CHINESE_SIGN_LIST) > -1 {
+				tempSign = lastString
+				// #如果最后1位 是  那么截掉最后1位
+				newChNumberString = string(tempChineseNumberList[:len(tempChineseNumberList)-1])
+			} else {
+				tempSign = ""
+			}
+		}
+		newChineseNumberList = append(newChineseNumberList, newChNumberString)
+	}
+	return newChineseNumberList
+}
+
 // TakeChineseNumberFromString 将句子中的汉子数字提取的整体函数
 func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interface{} {
 
@@ -720,6 +761,9 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 
 	// #检查末尾百分之万分之问题
 	CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
+
+	// 检查最后是正负号的问题
+	CHNumberStringListTemp = checkSignSeg(CHNumberStringListTemp)
 
 	//检查合理性
 	for i := 0; i < len(CHNumberStringListTemp); i++ {

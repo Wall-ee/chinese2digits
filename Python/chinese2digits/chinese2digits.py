@@ -201,6 +201,11 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
                 convertResult = '0.'+ coreCHToDigits(chineseCharsDotSplitList[1],simpilfy)
             else:
                 convertResult = coreCHToDigits(chineseCharsDotSplitList[0],simpilfy) + '.' + coreCHToDigits(chineseCharsDotSplitList[1],simpilfy)
+        """
+        如果 convertResult 是空字符串， 表示可能整体字符串是 负百分之10 这种  或者 -百分之10
+        """
+        if convertResult =='':
+            convertResult = '1'
 
         convertResult = sign + convertResult
 
@@ -420,6 +425,22 @@ def checkNumberSeg(chineseNumberList):
         newChineseNumberList.append(newChNumberString)
     return newChineseNumberList
 
+def checkSignSeg(chineseNumberList):
+    newChineseNumberList = []
+    tempSign = ''
+    for i in range(len(chineseNumberList)):
+        #新字符串 需要加上上一个字符串 最后1位的判断结果
+        newChNumberString = tempSign  + chineseNumberList[i]
+        lastString = newChNumberString[-1:]
+        #如果最后3位是正负号 那么本字符去掉最后1位  下一个数字加上最后3位
+        if lastString in CHINESE_SIGN_LIST:
+            tempSign = lastString
+            #如果最后1位 是  那么截掉最后3位
+            newChNumberString = newChNumberString[:-1]
+        else:
+            tempSign = ''
+        newChineseNumberList.append(newChNumberString)
+    return newChineseNumberList
 
 #TODO 需要升级正则， 提供一个混合提取的正则表达式
 
@@ -448,6 +469,9 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
     CHNumberStringListTemp = takingChineseDigitsMixRERules.findall(chText)
     #检查末尾百分之万分之问题
     CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
+
+    #检查末位是不是正负号
+    CHNumberStringListTemp = checkSignSeg(CHNumberStringListTemp)
 
     #检查合理性
     CHNumberStringList= []
@@ -535,6 +559,7 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
 
 if __name__=='__main__':
     #混合提取
+    print(takeNumberFromString('百分之5负千分之15'))
     print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万'))
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
