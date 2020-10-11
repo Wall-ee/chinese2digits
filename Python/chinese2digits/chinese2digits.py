@@ -6,6 +6,7 @@ CHINESE_CHAR_LIST = ['幺','零', '一', '二', '两', '三', '四', '五', '六
 CHINESE_SIGN_LIST = ['负','正','-','+']
 CHINESE_CONNECTING_SIGN_LIST = ['.','点','·']
 CHINESE_PER_COUNTING_STRING_LIST = ['百分之','千分之','万分之']
+CHINESE_PER_COUNTING_SEG = '分之'
 CHINESE_PURE_NUMBER_LIST = ['幺', '一', '二', '两', '三', '四', '五', '六', '七', '八', '九', '十','零']
 
 CHINESE_SIGN_DICT = {'负':'-','正':'+','-':'-','+':'+'}
@@ -45,16 +46,26 @@ takingChineseNumberRERules = re.compile('(?:(?:(?:[百千万]分之[正负]{0,1}
 #
 # bb = '(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})'
 
+# takingChineseDigitsMixRERules = re.compile('(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|'
+#                 '(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})){0,1}'
+#                 '(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}'
+#                 '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+#                 '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})|'
+#                 '(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|'
+#                 '(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1}))'
+#                 '(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}'
+#                 '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+#                 '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}){0,1}')
+
+#新规则 以 正负号 及分之 切割 然后检查切割 然后进行翻译
 takingChineseDigitsMixRERules = re.compile('(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|'
                 '(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})){0,1}'
-                '(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}'
-                '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-                '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})|'
+                '(?:(?:(?:[正负]{0,1})(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+                '(?:点[一二三四五六七八九幺零]+)))|'
                 '(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|'
                 '(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1}))'
-                '(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}'
-                '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-                '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}){0,1}')
+                '(?:(?:(?:[正负]{0,1})(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+                '(?:点[一二三四五六七八九幺零]+))){0,1}')
 
 PURE_DIGITS_RE = re.compile('[0-9]')
 
@@ -153,7 +164,7 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
 
     if chineseChars != '':
         """
-        进行标准汉字字符串转换 例如 二千二  转换成二千零二
+        进行标准汉字字符串转换 例如 二千二  转换成二千二百 四万十五变成四万零十五
         """
         chineseChars = standardChNumberConvert(str(chineseChars))
         #kaka
@@ -178,10 +189,17 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
         看有没有百分号
         """
         perCountingString = ''
+        
         for perCountingUnit in CHINESE_PER_COUNTING_STRING_LIST:
             if perCountingUnit in chineseChars:
                 perCountingString = CHINESE_PER_COUNTING_DICT.get(perCountingUnit,'%')
                 chineseChars = chineseChars.replace(perCountingUnit,'')
+
+        """
+        分之  分号切割  要注意
+        """
+        #TODO 如果是十分之一 要注意
+
 
         """
         小数点切割，看看是不是有小数点
@@ -209,6 +227,7 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
 
         convertResult = sign + convertResult
 
+        #是否转换分号及百分比
         if percentConvert == True:
             if perCountingString == '%':
                 convertResult = float(Decimal(convertResult)/100)
@@ -356,7 +375,7 @@ def traditionalTextConvertFunc(chString,traditionalConvertSwitch=True):
     return ''.join(chStringList)
 
 """
-标准表述转换  三千二 变成 三千零二  三千十二变成 三千零一十二
+标准表述转换  三千二 变成 三千二百 三千十二变成 三千零一十二 四万十五变成四万零十五
 """
 def standardChNumberConvert(chNumberString):
     chNumberStringList = list(chNumberString)
@@ -408,21 +427,50 @@ def standardChNumberConvert(chNumberString):
     return ''.join(chNumberStringList)
 
 
-def checkNumberSeg(chineseNumberList):
+def checkNumberSeg(chineseNumberList,originText):
     newChineseNumberList = []
-    tempPreCounting = ''
-    for i in range(len(chineseNumberList)):
-        #新字符串 需要加上上一个字符串 最后3位的判断结果
-        newChNumberString = tempPreCounting  + chineseNumberList[i]
-        lastString = newChNumberString[-3:]
-        #如果最后3位是百分比 那么本字符去掉最后三位  下一个数字加上最后3位
-        if lastString in CHINESE_PER_COUNTING_STRING_LIST:
-            tempPreCounting = lastString
-            #如果最后三位 是  那么截掉最后3位
-            newChNumberString = newChNumberString[:-3]
-        else:
-            tempPreCounting = ''
-        newChineseNumberList.append(newChNumberString)
+    # tempPreCounting = ''
+    tempMixedString = ''
+    segLen = len(chineseNumberList) 
+    if len(chineseNumberList)>1:
+        for i in range(1,segLen):
+            #判断本字符是不是以  分之  开头  
+            if chineseNumberList[i][:2] in CHINESE_PER_COUNTING_SEG:
+                #如果是以 分之 开头 那么检查他和他见面的汉子数字是不是连续的 即 是否在原始字符串出现
+                tempMixedString = chineseNumberList[i-1] + chineseNumberList[i]
+                if tempMixedString in originText:
+                    newChineseNumberList.append(tempMixedString)
+                    # continue
+                else:
+                    #说明前一个数字 和本数字不是连续的
+                    #本数字去掉分之二字
+                    newChineseNumberList.append(chineseNumberList[i][2:])
+            else:
+                #不是  分之 开头 那么把本数字加入序列
+                newChineseNumberList.append(chineseNumberList[i])
+
+    #加入唯一的一个 或者第一个
+    if chineseNumberList[0][:2] in CHINESE_PER_COUNTING_SEG:
+        newChineseNumberList.append(chineseNumberList[0][2:])
+    else:
+        newChineseNumberList.append(chineseNumberList[0])
+    return newChineseNumberList
+
+    # for i in range(len(chineseNumberList)):
+    #     #TODO 应当判断当前的汉字 与后一个提取的汉子数字 是否是连续的在原始字符串出现的，如果非连续 就出现了问题 比如  7分之前三四五
+    #     #TODO  另外 十分之 也需要处理
+    #     #TODO  4分之三 这种也要处理
+    #     #新字符串 需要加上上一个字符串 最后3位的判断结果
+    #     newChNumberString = tempPreCounting  + chineseNumberList[i]
+    #     lastString = newChNumberString[-3:]
+    #     #如果最后3位是百分比 那么本字符去掉最后三位  下一个数字加上最后3位
+    #     if lastString in CHINESE_PER_COUNTING_STRING_LIST:
+    #         tempPreCounting = lastString
+    #         #如果最后三位 是  那么截掉最后3位
+    #         newChNumberString = newChNumberString[:-3]
+    #     else:
+    #         tempPreCounting = ''
+    #     newChineseNumberList.append(newChNumberString)
     return newChineseNumberList
 
 def checkSignSeg(chineseNumberList):
@@ -467,7 +515,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
     """
     # CHNumberStringListTemp = takingChineseNumberRERules.findall(chText)
     CHNumberStringListTemp = takingChineseDigitsMixRERules.findall(chText)
-    #检查末尾百分之万分之问题
+    #检查是不是  分之 切割不完整问题
     CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
 
     #检查末位是不是正负号
@@ -558,6 +606,7 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
     return finalResult
 
 if __name__=='__main__':
+
     #混合提取
     print(takeNumberFromString('百分之5负千分之15'))
     print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万'))
@@ -565,12 +614,18 @@ if __name__=='__main__':
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     print(takeChineseNumberFromString('啊啦啦啦300十万你好我20万.3%万哦哦哦300万'))
     print(takeChineseNumberFromString('aaaa.3%万'))
-    #使用正则表达式，用python的pcre引擎，没有使用re2引擎，所以， 因此不建议输入文本过长造成递归问题
+
+    #测试 四分之三 这种
+    # print(takeNumberFromString('十分之一'))
+    print(takeNumberFromString('四千三'))
+
+    #正则引擎已经全部使用re2 规则 不再用pcre规则 防止出现递归炸弹
     print(takeChineseNumberFromString('百分之四百三十二万分之四三千分之五'))
 
     print(takeChineseNumberFromString('伍亿柒仟万拾柒今天天气不错百分之三亿二百万五啦啦啦啦负百分之点二八你好啊三万二'))
     print(takeChineseNumberFromString('llalala万三威风威风千四五'))
     print(takeChineseNumberFromString('哥两好'))
     print(takeChineseNumberFromString('伍亿柒仟万拾柒百分之'))
-    #使用普通顺序逻辑引擎
-    print(takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八',method='normal'))
+    print(takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八'))
+
+    
