@@ -232,6 +232,17 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
             total = digitsChars
     return total
 
+def chineseToDigitsHighTolerance(chineseDigitsMixString,simpilfy=None,percentConvert = True, skipError=False, errorChar=list(), errorMsg=list()):
+    if skipError:
+        try:
+            total = chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True)
+        except Exception as e:
+            total = None
+            errorChar.append(chineseDigitsMixString)
+            errorMsg.append(str(e))
+    else:
+        total = chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True)
+    return total
 
 
 def checkChineseNumberReasonable(chNumber,digitsNumberSwitch= False):
@@ -444,7 +455,7 @@ def checkSignSeg(chineseNumberList):
 
 #TODO 需要升级正则， 提供一个混合提取的正则表达式
 
-def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False,*args,**kwargs):
+def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False,skipError=False, verbose=False,*args,**kwargs):
     """
     :param chText: chinese string
     :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
@@ -491,12 +502,15 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
     """
     digitsStringList = []
     replacedText = chText
+    errorCharList = []
+    errorMsgList = []
     if CHNumberStringList.__len__()>0:
-        digitsStringList = list(map(lambda x:chineseToDigits(x,simpilfy=simpilfy,percentConvert=percentConvert),CHNumberStringList))
+        digitsStringList = list(map(lambda x:chineseToDigitsHighTolerance(x,simpilfy=simpilfy,percentConvert=percentConvert,skipError=skipError,errorChar=errorCharList,errorMsg=errorMsgList),CHNumberStringList))
         # # 用标准清洗后的字符串进行转换
         # digitsStringList = list(
         #     map(lambda x: chineseToDigits(x, simpilfy=simpilfy, percentConvert=percentConvert), CHNumberStringListTemp))
-        tupleToReplace = list(zip(CHNumberStringList,digitsStringList,list(map(len,CHNumberStringList))))
+        # tupleToReplace = list(zip(CHNumberStringList,digitsStringList,list(map(len,CHNumberStringList))))
+        tupleToReplace = [ (d,c,i) for d,c,i in zip(CHNumberStringList,digitsStringList,list(map(len,CHNumberStringList))) if c is not None]
 
 
         """
@@ -504,30 +518,43 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
         """
         tupleToReplace = sorted(tupleToReplace, key=lambda x: -x[2])
         for i in range(tupleToReplace.__len__()):
+            if tupleToReplace[i][0] is None:
+                pass
             replacedText = replacedText.replace(tupleToReplace[i][0],tupleToReplace[i][1])
 
-
-    finalResult = {
-        'inputText':originText,
-        'replacedText':replacedText,
-        'CHNumberStringList':CHNumberStringList,
-        'digitsStringList':digitsStringList
-    }
+    if verbose:
+        finalResult = {
+            'inputText':originText,
+            'replacedText':replacedText,
+            'CHNumberStringList':CHNumberStringList,
+            'digitsStringList':digitsStringList,
+            'errorWordList': errorCharList,
+            'errorMsgList': errorMsgList
+        }
+        pass
+    else:
+        finalResult = {
+            'inputText':originText,
+            'replacedText':replacedText,
+            'CHNumberStringList':CHNumberStringList,
+            'digitsStringList':digitsStringList
+        }
     return finalResult
 
 
-def takeNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= True,*args,**kwargs):
+def takeNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= True, skipError=False, verbose=False, *args,**kwargs):
     """
     :param chText: chinese string
     :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
     :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
     :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
     :param digitsNumberSwitch: Switch to convert the take pure digits number
+    :param skipError: output low precision result, if an exception is thrown, func will not replace
+    :param verbose: if true, will return words that raised exception
     :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
     """
-    finalResult = takeChineseNumberFromString(chText,simpilfy=simpilfy,percentConvert = percentConvert,traditionalConvert= traditionalConvert,digitsNumberSwitch= digitsNumberSwitch)
+    finalResult = takeChineseNumberFromString(chText,simpilfy=simpilfy,percentConvert = percentConvert,traditionalConvert= traditionalConvert,digitsNumberSwitch= digitsNumberSwitch, skipError=skipError, verbose=verbose)
     return finalResult
-
 
 
 def takeDigitsNumberFromString(textToExtract,percentConvert = False):
@@ -561,6 +588,10 @@ if __name__=='__main__':
     #混合提取
     print(takeNumberFromString('百分之5负千分之15'))
     print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万'))
+    print(takeNumberFromString('七点十分之前', skipError=True, verbose=True))
+    asr = "反正我十分我七点十分之前肯定会的，可以会下去等你。  尾号一一零三八。"
+    print(takeNumberFromString(asr, skipError=True, verbose=True))
+    print(takeNumberFromString('七点十分之前'))
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     print(takeChineseNumberFromString('啊啦啦啦300十万你好我20万.3%万哦哦哦300万'))
