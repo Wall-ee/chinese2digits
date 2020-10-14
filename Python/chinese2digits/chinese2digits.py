@@ -573,27 +573,25 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
     return finalResult
 
 if __name__=='__main__':
-    # 新测试用例  分数测试
 
-    print(takeChineseNumberFromString('四分之三啦啦五百分之二',percentConvert=False))
-    print(takeChineseNumberFromString('4分之3负五分之6咿呀呀 四百分之16ooo千千万万'))
-    print(takeNumberFromString('百分之五1234%'))
-    print(takeNumberFromString('五百分之一',percentConvert=False))
     #混合提取
     print(takeNumberFromString('百分之5负千分之15'))
     print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万'))
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
-    print(takeChineseNumberFromString('啊啦啦啦300十万你好我20万.3%万哦哦哦300万'))
     print(takeChineseNumberFromString('aaaa.3%万'))
-
-    #测试 四分之三 这种
-    # print(takeNumberFromString('十分之一'))
-    print(takeNumberFromString('四千三'))
+    # 新测试用例  分数测试  四分之三 这种
+    print(takeNumberFromString('十分之一'))
+    print(takeChineseNumberFromString('四分之三啦啦五百分之二',percentConvert=False))
+    print(takeChineseNumberFromString('4分之3负五分之6咿呀呀 四百分之16ooo千千万万'))
+    print(takeNumberFromString('百分之五1234%'))
+    print(takeNumberFromString('五百分之一',percentConvert=False))
 
     #正则引擎已经全部使用re2 规则 不再用pcre规则 防止出现递归炸弹
     print(takeChineseNumberFromString('百分之四百三十二万分之四三千分之五'))
 
+    #测试繁体 简称  等
+    print(takeNumberFromString('四千三'))
     print(takeChineseNumberFromString('伍亿柒仟万拾柒今天天气不错百分之三亿二百万五啦啦啦啦负百分之点二八你好啊三万二'))
     print(takeChineseNumberFromString('llalala万三威风威风千四五'))
     print(takeChineseNumberFromString('哥两好'))
