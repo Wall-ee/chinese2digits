@@ -36,35 +36,6 @@ digits_char_ch_dict = {'0':'零','1':'一','2':'二','3':'三','4':'四','5':'�
 takingChineseNumberRERules = re.compile('(?:(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))'
                                         '(?:(?:分之)(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
                                         '(?:点[一二三四五六七八九幺零]+))){0,1}')
-#数字汉字混合提取的正则引擎
-# takingChineseDigitsMixRERules = re.compile('(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}'
-#                                            '(?:(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))'
-#                                            '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-#                                            '(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|'
-#                                            '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-#                                            '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})')
-#
-#
-# aaa = re.compile('(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}')
-#
-# bb = '(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})'
-
-# takingChineseDigitsMixRERules = re.compile('(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|'
-#                 '(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})){0,1}'
-#                 '(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}'
-#                 '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-#                 '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})|'
-#                 '(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|'
-#                 '(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1}))'
-#                 '(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}'
-#                 '(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-#                 '(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}){0,1}')
-
-#新规则 以 正负号 及分之 切割 然后检查切割 然后进行翻译
-# takingChineseDigitsMixRERules = re.compile('(?:(?:(?:\+|\-){0,1}(?:分之){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})){0,1}'
-#                                         '(?:(?:[正负]{0,1}(?:分之){0,1})(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))|'
-#                                         '(?:(?:(?:\+|\-){0,1}(?:分之){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1}))'
-#                                         '(?:(?:[正负]{0,1}(?:分之){0,1})(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))){0,1}')
 
 takingChineseDigitsMixRERules = re.compile('(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})'
                                             '(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|\.\d+(?:[\%\‰\‱]){0,1}){0,1}'
@@ -163,11 +134,10 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
         tempChineseChars = chineseCharsListByDiv[k]
 
         chineseChars  = tempChineseChars
+        # chineseChars = str(chineseChars)
+        # tempChineseChars = chineseChars
         #kaka
         chineseCharsDotSplitList = []
-        chineseChars = str(chineseChars)
-        tempChineseChars = chineseChars
-
 
         """
         看有没有符号
@@ -229,6 +199,19 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
         finalTotal = convertResultList[0]
     return finalTotal
 
+
+def chineseToDigitsHighTolerance(chineseDigitsMixString,simpilfy=None,percentConvert = True, skipError=False, errorChar=[], errorMsg=[]):
+    if skipError:
+        try:
+            total = chineseToDigits(chineseDigitsMixString,simpilfy=simpilfy,percentConvert = percentConvert)
+        except Exception as e:
+            #返回类型不能是none 是空字符串
+            total = ''
+            errorChar.append(chineseDigitsMixString)
+            errorMsg.append(str(e))
+    else:
+        total = chineseToDigits(chineseDigitsMixString,simpilfy=simpilfy,percentConvert = percentConvert)
+    return total
 
 
 def checkChineseNumberReasonable(chNumber):
@@ -435,7 +418,7 @@ def digitsToCHChars(mixedStringList,simplify=None):
 
 
 
-def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False,*args,**kwargs):
+def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False,verbose=False,*args,**kwargs):
     """
     :param chText: chinese string
     :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
@@ -503,6 +486,8 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
     """
     digitsStringList = []
     replacedText = chText
+    errorCharList = []
+    errorMsgList = []
     if CHNumberStringList.__len__()>0:
         # digitsStringList = list(map(lambda x:chineseToDigits(x,simpilfy=simpilfy,percentConvert=percentConvert),CHNumberStringList))
         # 用标准清洗后的字符串进行转换
@@ -510,8 +495,10 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
         #     map(lambda x: chineseToDigits(x, simpilfy=simpilfy, percentConvert=percentConvert), CHNumberStringListTemp))
 
         for kk in range(len(CHNumberStringListTemp)):
-            digitsStringList.append(chineseToDigits(CHNumberStringListTemp[kk], simpilfy=simpilfyList[kk], percentConvert=percentConvert))
-        tupleToReplace = list(zip(OriginCHNumberForOutput,digitsStringList,list(map(len,OriginCHNumberForOutput))))
+            # digitsStringList.append(chineseToDigits(CHNumberStringListTemp[kk], simpilfy=simpilfyList[kk], percentConvert=percentConvert))
+            digitsStringList.append(chineseToDigitsHighTolerance(CHNumberStringListTemp[kk],simpilfy=simpilfyList[kk],percentConvert=percentConvert,skipError=verbose,errorChar=errorCharList,errorMsg=errorMsgList))
+        # tupleToReplace = list(zip(OriginCHNumberForOutput,digitsStringList,list(map(len,OriginCHNumberForOutput))))
+        tupleToReplace = [ (d,c,i) for d,c,i in zip(OriginCHNumberForOutput,digitsStringList,list(map(len,OriginCHNumberForOutput))) if c !='']
 
 
         """
@@ -519,28 +506,39 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
         """
         tupleToReplace = sorted(tupleToReplace, key=lambda x: -x[2])
         for i in range(tupleToReplace.__len__()):
+            # if tupleToReplace[i][0] is None:
+            #     continue
             replacedText = replacedText.replace(tupleToReplace[i][0],tupleToReplace[i][1])
 
 
+    # finalResult = {
+    #     'inputText':originText,
+    #     'replacedText':replacedText,
+    #     'CHNumberStringList':OriginCHNumberForOutput,
+    #     'digitsStringList':digitsStringList
+    # }
     finalResult = {
         'inputText':originText,
         'replacedText':replacedText,
         'CHNumberStringList':OriginCHNumberForOutput,
-        'digitsStringList':digitsStringList
+        'digitsStringList':digitsStringList,
+        'errorWordList': errorCharList,
+        'errorMsgList': errorMsgList
     }
     return finalResult
 
 
-def takeNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False,*args,**kwargs):
+def takeNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False, verbose=False, *args,**kwargs):
     """
     :param chText: chinese string
     :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
     :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
     :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
     :param digitsNumberSwitch: Switch to convert the take pure digits number
+    :param verbose: if true, will return words that raised exception and catch the error
     :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
     """
-    finalResult = takeChineseNumberFromString(chText,simpilfy=simpilfy,percentConvert = percentConvert,traditionalConvert= traditionalConvert,digitsNumberSwitch= digitsNumberSwitch)
+    finalResult = takeChineseNumberFromString(chText,simpilfy=simpilfy,percentConvert = percentConvert,traditionalConvert= traditionalConvert,digitsNumberSwitch= digitsNumberSwitch,verbose=verbose)
     return finalResult
 
 

@@ -30,139 +30,45 @@ var chineseConnectingSignDict = map[string]string{".": ".", "点": ".", "·": ".
 
 var chinesePureNumberList = map[string]int{"幺": 1, "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
 
-var takingChineseNumberRERules, regError1 = regexp.Compile(`(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))` +
-	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
-	`(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|(?:(?:[一二三四五六七八九十千万亿兆幺零百]+` +
-	`(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}`)
+"""
+阿拉伯数字转中文
+"""
+var digitsCharChineseDict = map[string] string{"0":"零","1":"一","2":"二","3":"三","4":"四","5":"五","6":"六","7":"七","8":"八","9":"九","%":"百分之","‰":"千分之","‱":"万分之",".":"点"}
+
+var takingChineseNumberRERules, regError1 = regexp.Compile(`(?:(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))` +
+	`(?:(?:分之)(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
+	`(?:点[一二三四五六七八九幺零]+))){0,1}`)
 
 //数字汉字混合提取的正则引擎
-// var takingChineseDigitsMixRERules, regError2 = regexp.Compile(`(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}){0,1}` +
-// 	`(?:(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1}))` +
-// 	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
-// 	`(?:点[一二三四五六七八九幺零]+)))(?:分之){0,1}|` +
-// 	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
-// 	`(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})`)
 
 // mac 系统对于下面的正则会报错  还在找原因
 //runtime error: invalid memory address or nil pointer dereference [signal SIGSEGV: segmentation violation]
 //Unable to propogate EXC_BAD_ACCESS signal to target process and panic (see https://github.com/go-delve/delve/issues/852)
 //go 语言没有 ‰\‱  会报错
-var takingChineseDigitsMixRERules, regError2 = regexp.Compile(`(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|` +
-	`(?:\+|\-){0,1}\.\d+(?:\%){0,1})){0,1}` +
-	`(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}` +
-	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
-	`(?:点[一二三四五六七八九幺零]+))(?:分之){0,1})|` +
-	`(?:(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|` +
-	`(?:\+|\-){0,1}\.\d+(?:\%){0,1}))` +
-	`(?:(?:(?:[百千万]分之[正负]{0,1})|(?:[正负](?:[百千万]分之){0,1})){0,1}` +
-	`(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
-	`(?:点[一二三四五六七八九幺零]+))(?:分之){0,1}){0,1}`)
+var takingChineseDigitsMixRERules, regError2 = regexp.Compile(`(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})` +
+	`(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰]){0,1}|\.\d+(?:[\%\‰]){0,1}){0,1}` +
+	`(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))))` +
+	`|(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰]){0,1}|\.\d+(?:[\%\‰]){0,1})` +
+	`(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))){0,1}))`)
 
 var PURE_DIGITS_RE, regError3 = regexp.Compile(`[0-9]`)
 
 var takingDigitsRERule, regError4 = regexp.Compile(`(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}`)
 
 func checkChineseNumberReasonable(chNumber string, opt ...bool) []string {
-
-	digitsNumberSwitch := false
-	if len(opt) == 1 {
-		digitsNumberSwitch = opt[0]
-	}
-	//#TODO 混合提取函数
-	// chineseChars := []rune(chNumber)
-	//"""
-	//先看数字部分是不是合理
-	//"""
-	//"""
-	//汉字数字切割 然后再进行识别
-	//"""
-	chPartRegMatchResult := takingChineseNumberRERules.FindAllStringSubmatch(chNumber, -1)
-
-	chNumberPart := ""
-	if len(chPartRegMatchResult) > 0 {
-		chNumberPart = chPartRegMatchResult[0][0]
-	}
-	digitsPartRegMatchResult := takingDigitsRERule.FindAllStringSubmatch(chNumber, -1)
-	digitsNumberPart := ""
-	if len(digitsPartRegMatchResult) > 0 {
-		digitsNumberPart = digitsPartRegMatchResult[0][0]
-	}
-
-	digitsNumberReasonable := false
-	if digitsNumberPart != "" {
-		//"""
-		//罗马数字合理部分检查
-		//"""
-		pureDigitsREResult := PURE_DIGITS_RE.FindAllStringSubmatch(digitsNumberPart, -1)
-		if len(pureDigitsREResult) > 0 {
-			digitsNumberReasonable = true
-		} else {
-			digitsNumberReasonable = false
-		}
-
-	}
-
-	chNumberReasonable := false
-	if chNumberPart != "" {
+	result := ""
+    if len(chNumber)>0{
+		// #由于在上个检查点 已经把阿拉伯数字转为中文 因此不用检查阿拉伯数字部分
+        // """
+        // 如果汉字长度大于0 则判断是不是 万  千  单字这种
 		// """
-		// 如果汉字长度大于0 则判断是不是 万  千  单字这种
-		// """
-
 		for i := 0; i < len(CHINESE_PURE_NUMBER_LIST); i++ {
 			if strings.Contains(chNumberPart, CHINESE_PURE_NUMBER_LIST[i]) {
 				chNumberReasonable = true
-				break
+				// break
+				return chNumber
 			}
 		}
-
-	}
-	result := []string{}
-	if chNumberPart != "" {
-		//#中文部分合理
-		if chNumberReasonable == true {
-			//#罗马部分也合理 则为mix双合理模式 300三十万
-			if digitsNumberReasonable == true {
-				//# 看看结果需不需要纯罗马数字结果
-				if digitsNumberSwitch == false {
-					//#只返回中文部分
-					result = []string{chNumberPart}
-				} else {
-					//#返回双部分
-					result = []string{digitsNumberPart, chNumberPart}
-				}
-
-			} else {
-				// #罗马部分不合理，中文合理  .三百万这种
-				result = []string{chNumberPart}
-			}
-
-		} else {
-			//#中文部分不合理，说明是单位这种
-			//#看看罗马部分是否合理
-			if digitsNumberReasonable == true {
-				//#罗马部分合理 说明是 mix 合理模式  300万这种
-				result = []string{chNumber}
-			} else {
-				//#罗马部分也不合理  双不合理模式  空结果
-				result = []string{}
-			}
-		}
-
-	} else {
-		//#汉字部分啥都没有，看看罗马数字部分
-		//# 看看结果需不需要纯罗马数字结果
-		if digitsNumberSwitch == false {
-			result = []string{}
-		} else {
-			//#需要纯罗马部分，检查罗马数字，罗马部分合理，返回罗马部分
-			if digitsNumberReasonable == true {
-				result = []string{digitsNumberPart}
-			} else {
-				//#罗马部分不合理  返回空
-				result = []string{}
-			}
-		}
-
 	}
 	return result
 }
@@ -262,19 +168,43 @@ func CoreCHToDigits(chineseCharsToTrans string, simpilfy interface{}) string {
 		}
 	} else {
 		// total:= ""
+
+		total=''
+        totalCountingVal = 1
+
 		tempBuf := bytes.Buffer{}
 		for i := 0; i < len(chineseChars); i++ {
 			charToGet := string(chineseChars[i])
 			val, exisits := chineseCharNumberDict[charToGet]
 			if !exisits {
+				//TODO  raise error
 			} else {
-				tempBuf.WriteString(strconv.Itoa(val))
+				// #如果有单位  例如 三零六万  这种 则需要吧单位拿出来乘一下
+				_,exisits1 := chineseCountingString[i]
+				if exisits1{
+					// #全部的单位乘法
+                    totalCountingVal := val * totalCountingVal
+                    if total == '':
+                        tempBuf.WriteString(strconv.Itoa(totalCountingVal))
+                    else:
+						tempBuf.WriteString(strconv.Itoa(strconv.ParseFloat(tempBuf.String(),32) * totalCountingVal))
+
+				}else{
+					tempBuf.WriteString(strconv.Itoa(val))
+				}
 			}
 
 		}
-		total = tempBuf.String()
+
 	}
-	return total
+	newTotalTemp = []rune(total)
+	if newTotalTemp[len(newTotalTemp)-2:] == ".0"{
+		newBuf := newTotalTemp[0:len(newTotalTemp)-2]
+	}else{
+		newBuf := newTotalTemp
+	}
+	newTotal = newBuf.String()
+	return newTotal
 }
 
 func convertDigitsStringToFloat(digitsString string) float64 {
@@ -311,37 +241,88 @@ func convertDigitsStringToFloat(digitsString string) float64 {
 	return finalTotal
 }
 
+func checkNumberSeg(chineseNumberList []string,originText string){
+	newChineseNumberList := []
+    // #用来控制是否前一个已经合并过  防止多重合并
+    tempPreText = ''
+    tempMixedString = ''
+    segLen := len(chineseNumberList) 
+    if segLen >0{
+		// #加入唯一的一个 或者第一个
+		// _, exists := chineseNumberList[0][:2]
+		if  isExistItem(string(chineseNumberList[0][:2]) , "分之"){
+			// #如果以分之开头 记录本次 防止后面要用 是否出现连续的 分之
+			tempPreText := chineseNumberList[0]
+			newChineseNumberList.append(chineseNumberList[0][2:])
+		}
+
+		if segLen >1{
+			for i:=1; i<segLen ; i++{
+				// #判断本字符是不是以  分之  开头  
+                if isExistItem(chineseNumberList[i][:2],"分之"{
+					// #如果是以 分之 开头 那么检查他和他见面的汉子数字是不是连续的 即 是否在原始字符串出现
+                    tempMixedString = chineseNumberList[i-1] + chineseNumberList[i]
+                    if isExistItem(tempMixedString in originText){
+						// #如果连续的上一个字段是以分之开头的  本字段又以分之开头  
+                        if tempPreText != ""{
+							// #检查上一个字段的末尾是不是 以 百 十 万 的单位结尾
+                            if isExistItem(tempPreText[-1],CHINESE_PURE_COUNTING_UNIT_LIST){
+								// #先把上一个记录进去的最后一位去掉
+                                newChineseNumberList[-1] = newChineseNumberList[-1][:-1]
+								// #如果结果是确定的，那么本次的字段应当加上上一个字段的最后一个字
+                                newChineseNumberList= append(newChineseNumberList,tempPreText[-1] + chineseNumberList[i])
+							}else{
+								// #如果上一个字段不是以单位结尾  同时他又是以分之开头，那么 本次把分之去掉
+                                newChineseNumberList=append(newChineseNumberList,chineseNumberList[i][2:])
+							}
+						}else{
+							// #上一个字段不以分之开头，那么把两个字段合并记录
+                            if len(newChineseNumberList)>0{
+								newChineseNumberList[-1] = tempMixedString
+							}else{
+								newChineseNumberList = append(newChineseNumberList,tempMixedString)
+							}     
+						}
+					}else{
+						// #说明前一个数字 和本数字不是连续的
+                        // #本数字去掉分之二字
+                        newChineseNumberList =append(newChineseNumberList,chineseNumberList[i][2:])
+					}
+                    // #记录以 分之 开头的字段  用以下一个汉字字段判别
+                    tempPreText = chineseNumberList[i]
+				}else{
+					// #不是  分之 开头 那么把本数字加入序列
+                    newChineseNumberList = append(newChineseNumberList, chineseNumberList[i])
+                    // #记录把不是 分之 开头的字段  临时变量记为空
+                    tempPreText = ''
+				}
+			}
+		}
+	}
+    return newChineseNumberList
+}
+    
 // ChineseToDigits 是可以识别包含百分号，正负号的函数，并控制是否将百分之10转化为0.1
 func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy interface{}) string {
+	// """
+    // 分之  分号切割  要注意
+	// """
+	finalTotal :=""
+	convertResultList := []
+	chineseCharsListByDiv := []
+	if strings.Contains(chineseCharsToTrans, "分之"){
+		chineseCharsListByDiv = strings.Split(chineseCharsToTrans, "分之")
 
-	//"""
-	//汉字数字切割 然后再进行识别
-	//"""
-	chPartRegMatchResult := takingChineseNumberRERules.FindAllStringSubmatch(chineseCharsToTrans, -1)
-
-	chPartString := ""
-	if len(chPartRegMatchResult) > 0 {
-		chPartString = chPartRegMatchResult[0][0]
+	}else{
+		chineseCharsListByDiv = append(chineseCharsListByDiv, chineseCharsToTrans)
 	}
-	digitsPartRegMatchResult := takingDigitsRERule.FindAllStringSubmatch(chineseCharsToTrans, -1)
-	digitsPartString := ""
-	if len(digitsPartRegMatchResult) > 0 {
-		digitsPartString = digitsPartRegMatchResult[0][0]
-	}
+	
+	for k := 0; k < len(chineseCharsListByDiv); k++ {
 
-	finalTotal := ""
+		tempChineseChars := chineseCharsListByDiv[k]
 
-	digitsPart := 1.0
-	if digitsPartString != "" {
-		digitsPart = convertDigitsStringToFloat(digitsPartString)
-	}
-
-	if chPartString != "" {
-		chineseCharsToTrans = standardChNumberConvert(chPartString)
-		//chineseCharsToTrans = standardChNumberConvert(chineseCharsToTrans)
-
-		chineseChars := []rune(chineseCharsToTrans)
-
+		chineseChars  := tempChineseChars
+		// chineseChars = []rune(tempChineseChars)
 		// """
 		// 看有没有符号
 		// """
@@ -355,25 +336,6 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 			}
 
 		}
-
-		// """
-		// 看有没有百分号 千分号 万分号
-		// """
-		chineseChars = []rune(chineseCharsToTrans)
-		perCountingString := ""
-
-		for i := 0; i < len(CHINESE_PER_COUNTING_STRING_LIST); i++ {
-			if strings.Contains(chineseCharsToTrans, CHINESE_PER_COUNTING_STRING_LIST[i]) {
-				value, exists := CHINESE_PER_COUNTING_DICT[string(CHINESE_PER_COUNTING_STRING_LIST[i])]
-				if exists {
-					perCountingString = value
-				} else {
-					perCountingString = ""
-				}
-				chineseCharsToTrans = strings.Replace(chineseCharsToTrans, CHINESE_PER_COUNTING_STRING_LIST[i], "", -1)
-			}
-		}
-
 		chineseChars = []rune(chineseCharsToTrans)
 
 		// """
@@ -391,7 +353,6 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 				break
 			}
 		}
-
 		convertResult := ""
 		if !stringContainDot {
 			convertResult = CoreCHToDigits(chineseCharsToTrans, simpilfy)
@@ -419,57 +380,69 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 			convertResult = "1"
 		}
 		convertResult = sign + convertResult
+		// #最后在双向转换一下 防止出现 0.3000 或者 00.300的情况
 
-		floatResult, err := strconv.ParseFloat(convertResult, 32)
-		if err != nil {
-			panic(err)
-		} else {
-			if percentConvert == true {
-				//看小数点后面有几位，如果小数点右边有数字 则手动保留一定的位数
-				convertResultDotSplitList := strings.Split(convertResult, ".")
-				rightOfConvertResultDotString := ""
-				if len(convertResultDotSplitList) > 1 {
-					rightOfConvertResultDotString = string(convertResultDotSplitList[1])
-				}
-				switch perCountingString {
-				case "%":
-					finalTotal = strconv.FormatFloat(digitsPart*floatResult/100, 'f', (len(rightOfConvertResultDotString) + 2), 32)
-				case "‰":
-					finalTotal = strconv.FormatFloat(digitsPart*floatResult/1000, 'f', (len(rightOfConvertResultDotString) + 3), 32)
-				case "‱":
-					finalTotal = strconv.FormatFloat(digitsPart*floatResult/10000, 'f', (len(rightOfConvertResultDotString) + 4), 32)
-				default:
-					finalTotal = strconv.FormatFloat(digitsPart*floatResult, 'f', -1, 32)
-				}
-				// switch perCountingString {
-				// case "%":
-				// 	finalTotal = strconv.FormatFloat(digitsPart*floatResult/100, 'f', -1, 32)
-				// case "‰":
-				// 	finalTotal = strconv.FormatFloat(digitsPart*floatResult/1000, 'f', -1, 32)
-				// case "‱":
-				// 	finalTotal = strconv.FormatFloat(digitsPart*floatResult/10000, 'f', -1, 32)
-				// default:
-				// 	finalTotal = strconv.FormatFloat(digitsPart*floatResult, 'f', -1, 32)
-				// }
-
-			} else {
-				finalTotal = strconv.FormatFloat(digitsPart*floatResult, 'f', -1, 32) + perCountingString
-			}
-			return finalTotal
+		newConvertResultTemp = []rune(convertResult)
+		if newConvertResultTemp[len(newConvertResultTemp)-2:] == ".0"{
+			newBuf := newConvertResultTemp[0:len(newConvertResultTemp)-2]
+		}else{
+			newBuf := newConvertResultTemp
 		}
-	} else {
-		//"""
-		//如果中文部分没有数值 ，取罗马数字部分
-		//"""
-		if percentConvert == true {
-			finalTotal = strconv.FormatFloat(digitsPart, 'f', -1, 32)
-		} else {
-			finalTotal = digitsPartString
-		}
-		return finalTotal
+		append(convertResultList, newBuf.String())
+	
 	}
+	if len(convertResultList)>1{
+		// #是否转换分号及百分比
+		if percentConvert == true{
+			finalTotal = strconv.FormatFloat(strconv.ParseFloat((convertResultList[1],32)/strconv.ParseFloat((convertResultList[0],32), 'f', 8, 32)
+		}
+		else{
+			if convertResultList[0] == "100"{
+				finalTotal = convertResultList[1] + '%'
+			}
+			else if convertResultList[0] == "1000"{
+				finalTotal = convertResultList[1] + '‰'
+			}
+			// elif convertResultList[0] == "10000":
+			// 	finalTotal = convertResultList[1] + '‱'
+			else{
+				finalTotal = convertResultList[1]+'/' + convertResultList[0]
+			}
+				
+		}
+
+	}
+	else{
+		finalTotal = convertResultList[0]
+	}
+	
 	return finalTotal
 }
+//阿拉伯数字转中文
+func digitsToCHChars(mixedStringList,simplify=None):
+    resultList = []
+    simplifyList=[] 
+    for isExistItem(mixedString ,mixedStringList):
+        if mixedString[0] == "."{
+			mixedString = '0'+mixedString
+		}
+        tempSimplify = simplify
+        for key :=range (digits_char_ch_dict):
+            if key in mixedString:
+                mixedString = mixedString.replace(key,digits_char_ch_dict.get(key))
+                #如果有数字转换 则simpilfy 强制为真  防止20万 变成二零万 最后 变成20000
+                tempSimplify = True
+                #应当是只要有百分号 就挪到前面 阿拉伯数字没有四百分之的说法
+                #防止这种 3%万 这种问题
+                for k in CHINESE_PER_COUNTING_STRING_LIST:
+                    if k in mixedString:
+                        temp = k + mixedString.replace(k,'')
+                        mixedString = temp
+
+        resultList.append(mixedString)
+        simplifyList.append(tempSimplify)
+    return resultList,simplifyList
+
 
 type structCHAndDigit struct {
 	CHNumberString    string //中文数字字符串
