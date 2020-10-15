@@ -419,29 +419,38 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool, simpilfy i
 	return finalTotal
 }
 //阿拉伯数字转中文
-func digitsToCHChars(mixedStringList,simplify=None):
+func digitsToCHChars(mixedStringList []string ,simplify interface{})([]string,[]string){
     resultList = []
     simplifyList=[] 
-    for isExistItem(mixedString ,mixedStringList):
-        if mixedString[0] == "."{
-			mixedString = '0'+mixedString
+    for i=0;i<len(mixedStringList);i++{
+		mixedString := mixedStringList[i]
+		if mixedString[0] == "."{
+			mixedString = "0"+mixedString
 		}
         tempSimplify = simplify
-        for key :=range (digits_char_ch_dict):
-            if key in mixedString:
-                mixedString = mixedString.replace(key,digits_char_ch_dict.get(key))
-                #如果有数字转换 则simpilfy 强制为真  防止20万 变成二零万 最后 变成20000
-                tempSimplify = True
-                #应当是只要有百分号 就挪到前面 阿拉伯数字没有四百分之的说法
-                #防止这种 3%万 这种问题
-                for k in CHINESE_PER_COUNTING_STRING_LIST:
-                    if k in mixedString:
-                        temp = k + mixedString.replace(k,'')
-                        mixedString = temp
+        for key :=range (digitsCharChineseDict){
+			if isExistItem(key,mixedString){
+				mixedString = strings.Replace(mixedString,key,digitsCharChineseDict[key])
+				// #如果有数字转换 则simpilfy 强制为真  防止20万 变成二零万 最后 变成20000
+				tempSimplify = true
+				// #应当是只要有百分号 就挪到前面 阿拉伯数字没有四百分之的说法
+				// #防止这种 3%万 这种问题
+				for kk=0;kk<len(CHINESE_PER_COUNTING_STRING_LIST);kk++{
+					k := CHINESE_PER_COUNTING_STRING_LIST[kk]
+					if isExistItem(k,mixedString){
+						temp := k + string.Replace(mixedString,k,"")
+						mixedString = temp
+					}
+				}
+			}
+		}
+        resultList = append(resultList,mixedString)
+		simplifyList = append(simplifyList,tempSimplify)
+		
+	}
 
-        resultList.append(mixedString)
-        simplifyList.append(tempSimplify)
-    return resultList,simplifyList
+	return resultList,simplifyList
+}
 
 
 type structCHAndDigit struct {
