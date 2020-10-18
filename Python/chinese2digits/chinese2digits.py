@@ -488,7 +488,7 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
     replacedText = chText
     errorCharList = []
     errorMsgList = []
-    if CHNumberStringList.__len__()>0:
+    if CHNumberStringListTemp.__len__()>0:
         # digitsStringList = list(map(lambda x:chineseToDigits(x,simpilfy=simpilfy,percentConvert=percentConvert),CHNumberStringList))
         # 用标准清洗后的字符串进行转换
         # digitsStringList = list(

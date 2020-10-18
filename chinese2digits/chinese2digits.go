@@ -743,23 +743,47 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 		CHNumberStringListTemp = append(CHNumberStringListTemp, tempText)
 	}
 
-	// #检查末尾百分之万分之问题
-	CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp)
+	// ##检查是不是  分之 切割不完整问题
+	CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp,originText)
 
 	// 检查最后是正负号的问题
 	CHNumberStringListTemp = checkSignSeg(CHNumberStringListTemp)
 
-	//检查合理性
+	// #备份一个原始的提取，后期处结果的时候显示用
+	OriginCHNumberTake := CHNumberStringListTemp
+
+	// #将阿拉伯数字变成汉字  不然合理性检查 以及后期 如果不是300万这种乘法  而是 四分之345  这种 就出错了
+    CHNumberStringListTemp,simpilfyListTemp = digitsToCHChars(CHNumberStringListTemp,simpilfy)
+	
+	//检查合理性 是否是单纯的单位  等
+	CHNumberStringList= []
+    OriginCHNumberForOutput = []
+    simpilfyList = []
 	for i := 0; i < len(CHNumberStringListTemp); i++ {
 		// fmt.Println(aa[i])
-
+.
 		tempText = CHNumberStringListTemp[i]
 		resonableResult := checkChineseNumberReasonable(tempText, digitsNumberSwitch)
+
 		if len(resonableResult) > 0 {
-			CHNumberStringList = append(CHNumberStringList, resonableResult...)
+			// #如果合理  则添加进被转换列表
+            CHNumberStringList = append(CHNumberStringList ,resonableResult)
+            // #则添加把原始提取的添加进来
+            OriginCHNumberForOutput  =append(OriginCHNumberForOutput,OriginCHNumberTake[i])
+            // #把simplify 开关放进来
+            simpilfyList = append(simpilfyList,simpilfyListTemp[i])
+			// CHNumberStringList = append(CHNumberStringList, resonableResult...)
 		}
 
 		// CHNumberStringList = append(CHNumberStringList, regMatchResult[i][0])
+	}
+
+	// """
+    // 进行标准汉字字符串转换 例如 二千二  转换成二千零二
+    // """
+	for i=0;i<len(CHNumberStringList);i++{
+		CHNumberStringListTemp[i] = standardChNumberConvert(CHNumberStringList[i])
+
 	}
 
 	//"""
@@ -770,13 +794,13 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	tempCHToDigitsResult := ""
 	CHNumberStringLenList := []int{}
 	structCHAndDigitSlice := []structCHAndDigit{}
-	if len(CHNumberStringList) > 0 {
-		for i := 0; i < len(CHNumberStringList); i++ {
-			tempCHToDigitsResult = ChineseToDigits(CHNumberStringList[i], percentConvert, simpilfy)
+	if len(CHNumberStringListTemp) > 0 {
+		for i := 0; i < len(CHNumberStringListTemp); i++ {
+			tempCHToDigitsResult = ChineseToDigits(CHNumberStringListTemp[i], percentConvert, simpilfyList[i])
 			digitsStringList = append(digitsStringList, tempCHToDigitsResult)
-			CHNumberStringLenList = append(CHNumberStringLenList, len(CHNumberStringList[i]))
+			CHNumberStringLenList = append(CHNumberStringLenList, len(CHNumberStringListTemp[i]))
 			//将每次的新结构体附加至准备排序的
-			structCHAndDigitSlice = append(structCHAndDigitSlice, structCHAndDigit{CHNumberStringList[i], digitsStringList[i], CHNumberStringLenList[i]})
+			structCHAndDigitSlice = append(structCHAndDigitSlice, structCHAndDigit{CHNumberStringListTemp[i], digitsStringList[i], CHNumberStringLenList[i]})
 		}
 		//fmt.Println(structCHAndDigitSlice)
 
@@ -793,7 +817,7 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	finalResult := map[string]interface{}{
 		"inputText":          originText,
 		"replacedText":       replacedText,
-		"CHNumberStringList": CHNumberStringList,
+		"CHNumberStringList": OriginCHNumberForOutput,
 		"digitsStringList":   digitsStringList,
 	}
 	return finalResult
