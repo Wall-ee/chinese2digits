@@ -30,15 +30,19 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) { // 使用t.Run()执行子测试
-			got := chinese2digits.TakeNumberFromString(tc.input, tc.sep)
-			if !reflect.DeepEqual(got["replacedText"], tc.replacedText) {
-				t.Errorf("excepted:%#v, got:%#v", tc.replacedText, got["replacedText"])
+			got := TakeNumberFromString(tc.input)
+
+			resultReplacedText := got.(map[string]interface{})["replacedText"]
+			resultCHNumberStringList := got.(map[string]interface{})["CHNumberStringList"]
+			resultDigitsStringList := got.(map[string]interface{})["digitsStringList"]
+			if !reflect.DeepEqual(resultReplacedText, tc.replacedText) {
+				t.Errorf("excepted:%v, got:%v", tc.replacedText, resultReplacedText)
 			}
-			if !reflect.DeepEqual(got["CHNumberStringList"], tc.CHNumberStringList) {
-				t.Errorf("excepted:%#v, got:%#v", tc.CHNumberStringList, got["CHNumberStringList"])
+			if !reflect.DeepEqual(resultCHNumberStringList, tc.CHNumberStringList) {
+				t.Errorf("excepted:%v, got:%v", tc.CHNumberStringList, resultCHNumberStringList)
 			}
-			if !reflect.DeepEqual(got["digitsStringList"], tc.digitsStringList) {
-				t.Errorf("excepted:%#v, got:%#v", tc.digitsStringList, got["digitsStringList"])
+			if !reflect.DeepEqual(resultDigitsStringList, tc.digitsStringList) {
+				t.Errorf("excepted:%v, got:%v", tc.digitsStringList, resultDigitsStringList)
 			}
 		})
 	}
