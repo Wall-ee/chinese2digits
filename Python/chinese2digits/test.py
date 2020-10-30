@@ -6,15 +6,21 @@ class TestDict(unittest.TestCase):
 
     def test_mixedExtract(self):
         print('===========testing mixed string extract============')
+        result = c2d.takeNumberFromString('三零万二零千拉阿拉啦啦30万20千嚯嚯或百四嚯嚯嚯四百三十二分之2345啦啦啦啦',percentConvert=False)
+        self.assertEqual(result['replacedText'], '320000拉阿拉啦啦30000020000嚯嚯或4%嚯嚯嚯2345/432啦啦啦啦')
+        self.assertEqual(result['CHNumberStringList'], ['三零万二零千', '30万', '20千', '百四', '四百三十二分之2345'])
+        self.assertEqual(result['digitsStringList'], ['320000', '300000', '20000', '4%', '2345/432'])
+
+
         result = c2d.takeNumberFromString('百分之5负千分之15')
         self.assertEqual(result['replacedText'], '0.05-0.015')
         self.assertEqual(result['CHNumberStringList'], ['百分之5', '负千分之15'])
         self.assertEqual(result['digitsStringList'], ['0.05', '-0.015'])
 
         result = c2d.takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万')
-        self.assertEqual(result['replacedText'], '啊啦啦啦300000000你好我2000000.003你好啊300咯咯咯-0.0034啦啦啦3000000')
+        self.assertEqual(result['replacedText'], '啊啦啦啦30000000你好我2000000.003你好啊300咯咯咯-0.0034啦啦啦3000000')
         self.assertEqual(result['CHNumberStringList'], ['300十万', '20万', '.3%万', '300', '-.34%', '300万'])
-        self.assertEqual(result['digitsStringList'], ['300000000', '200000', '0.003', '300', '-0.0034', '3000000'])
+        self.assertEqual(result['digitsStringList'], ['30000000', '200000', '0.003', '300', '-0.0034', '3000000'])
 
     def test_percentage_convert(self):
         print('===========testing percentage convert============')

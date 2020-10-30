@@ -54,76 +54,61 @@ DIGITS_CONNECTING_SIGN_LIST = ['.']
 DIGITS_PER_COUNTING_STRING_LIST = ['%','‰','‱']
 takingDigitsRERule = re.compile('(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})')
 
-def coreCHToDigits(chineseChars,simpilfy=None):
-    if simpilfy is None:
-        if chineseChars.__len__()>1:
-            """
-            如果字符串大于1 且没有单位 ，simpilfy 规则
-            """
-            for chars in chineseChars:
-                if CHINESE_COUNTING_STRING.get(chars) is None:
-                    simpilfy = True
-
-                else:
-                    simpilfy = False
-                    break
-
-    if simpilfy is False:
-        total = 0
-        countingUnit = 1              #表示单位：个十百千,用以计算单位相乘 例如八百万 百万是相乘的方法，但是如果万前面有 了一千八百万 这种，千和百不能相乘，要相加...
-        countingUnitFromString = [1]                            #原始字符串提取的单位应该是一个list  在计算的时候，新的单位应该是本次取得的数字乘以已经发现的最大单位，例如 4千三百五十万， 等于 4000万+300万+50万
-        for i in range(len(chineseChars) - 1, -1, -1):
-            val = common_used_ch_numerals.get(chineseChars[i])
-            if val >= 10 and i == 0:  #应对 十三 十四 十*之类，说明为十以上的数字，看是不是十三这种
-                #取最近一次的单位
-                if val > countingUnit:  #如果val大于 contingUnit 说明 是以一个更大的单位开头 例如 十三 千二这种
-                    countingUnit = val   #赋值新的计数单位
-                    total = total + val    #总值等于  全部值加上新的单位 类似于13 这种
-                    countingUnitFromString.append(val)
-                else:
-                    countingUnitFromString.append(val)
-                    # 计算用的单位是最新的单位乘以字符串中最大的原始单位
-                    # countingUnit = countingUnit * val
-                    countingUnit = max(countingUnitFromString) * val
-                    #total =total + r * x
-            elif val >= 10:
-                if val > countingUnit:
-                    countingUnit = val
-                    countingUnitFromString.append(val)
-                else:
-                    countingUnitFromString.append(val)
-                    # 计算用的单位是最新的单位乘以字符串中最大的原始单位
-                    # countingUnit = countingUnit * val
-                    countingUnit = max(countingUnitFromString) * val
+def coreCHToDigits(chineseChars):
+    total = 0
+    tempVal = '' #用以记录临时是否建议数字拼接的字符串 例如 三零万 的三零
+    countingUnit = 1              #表示单位：个十百千,用以计算单位相乘 例如八百万 百万是相乘的方法，但是如果万前面有 了一千八百万 这种，千和百不能相乘，要相加...
+    countingUnitFromString = [1]                            #原始字符串提取的单位应该是一个list  在计算的时候，新的单位应该是本次取得的数字乘以已经发现的最大单位，例如 4千三百五十万， 等于 4000万+300万+50万
+    for i in range(len(chineseChars) - 1, -1, -1):
+        val = common_used_ch_numerals.get(chineseChars[i])
+        if val >= 10 and i == 0:  #应对 十三 十四 十*之类，说明为十以上的数字，看是不是十三这种
+            #说明循环到了第一位 也就是最后一个循环 看看是不是单位开头
+            #取最近一次的单位
+            if val > countingUnit:  #如果val大于 contingUnit 说明 是以一个更大的单位开头 例如 十三 千二这种
+                countingUnit = val   #赋值新的计数单位
+                total = total + val    #总值等于  全部值加上新的单位 类似于13 这种
+                countingUnitFromString.append(val)
             else:
-                total = total + countingUnit * val
-        #如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
-        if total == 0 and countingUnit>0:
-            total = str(countingUnit)
+                countingUnitFromString.append(val)
+                # 计算用的单位是最新的单位乘以字符串中最大的原始单位  为了计算四百万这种
+                # countingUnit = countingUnit * val
+                countingUnit = max(countingUnitFromString) * val
+                #total =total + r * x
+        elif val >= 10:
+            if val > countingUnit:
+                countingUnit = val
+                countingUnitFromString.append(val)
+            else:
+                countingUnitFromString.append(val)
+                # 计算用的单位是最新的单位乘以字符串中最大的原始单位 为了计算四百万这种
+                # countingUnit = countingUnit * val
+                countingUnit = max(countingUnitFromString) * val
         else:
-            total = str(total)
-    else:
-        total=''
-        totalCountingVal = 1
-        for i in chineseChars:
-            tempDigit = common_used_ch_numerals.get(i,None)
-            if tempDigit is None:
-                raise TypeError ('string contains illegal char')
-            else:
-                #如果有单位  例如 三零六万  这种 则需要吧单位拿出来乘一下
-                if i in CHINESE_PURE_COUNTING_UNIT_LIST:
-                    #全部的单位乘法
-                    totalCountingVal = tempDigit * totalCountingVal
-                    if total == '':
-                        total = str(totalCountingVal)
-                    else:
-                        total = str(float(total) * totalCountingVal)
+            if i > 0 :
+                #如果下一个不是单位 则本次也是拼接
+                if common_used_ch_numerals.get(chineseChars[i-1]) <10:
+                    tempVal = str(val) + tempVal
                 else:
-                    total = total+str(tempDigit)
+                    #说明已经有大于10的单位插入 要数学计算了
+                    #先拼接再计算
+                    #如果取值不大于10 说明是0-9 则继续取值 直到取到最近一个大于10 的单位   应对这种30万20千 这样子
+                    total = total + countingUnit * int(str(val) + tempVal)            
+                    #计算后 把临时字符串置位空
+                    tempVal = ''
+            else:
+                #那就是无论如何要收尾了
+                total = total + countingUnit * int(str(val) + tempVal)
+
+    #如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
+    #如果countingUnit 大于10 说明他是就是 汉字零
+    if total == 0 and countingUnit>10:
+        total = str(countingUnit)
+    else:
+        total = str(total)
     if total.endswith('.0'):
         total = total[:-2]
     return total
-def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
+def chineseToDigits(chineseDigitsMixString,percentConvert = True,*args,**kwargs):
     #之前已经做过罗马数字变汉字 所以不存在罗马数字部分问题了
     """
     分之  分号切割  要注意
@@ -160,16 +145,16 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
                 chineseCharsDotSplitList = chineseChars.split(chars)
 
         if chineseCharsDotSplitList.__len__()==0:
-            convertResult = coreCHToDigits(chineseChars,simpilfy)
+            convertResult = coreCHToDigits(chineseChars)
         else:
             convertResult = ''
             if chineseCharsDotSplitList[0] == '':
                 """
                 .01234 这种开头  用0 补位
                 """
-                convertResult = '0.'+ coreCHToDigits(chineseCharsDotSplitList[1],simpilfy)
+                convertResult = '0.'+ coreCHToDigits(chineseCharsDotSplitList[1])
             else:
-                convertResult = coreCHToDigits(chineseCharsDotSplitList[0],simpilfy) + '.' + coreCHToDigits(chineseCharsDotSplitList[1],simpilfy)
+                convertResult = coreCHToDigits(chineseCharsDotSplitList[0]) + '.' + coreCHToDigits(chineseCharsDotSplitList[1])
         """
         如果 convertResult 是空字符串， 表示可能整体字符串是 负百分之10 这种  或者 -百分之10
         """
@@ -200,17 +185,17 @@ def chineseToDigits(chineseDigitsMixString,simpilfy=None,percentConvert = True):
     return finalTotal
 
 
-def chineseToDigitsHighTolerance(chineseDigitsMixString,simpilfy=None,percentConvert = True, skipError=False, errorChar=[], errorMsg=[]):
+def chineseToDigitsHighTolerance(chineseDigitsMixString,percentConvert = True, skipError=False, errorChar=[], errorMsg=[]):
     if skipError:
         try:
-            total = chineseToDigits(chineseDigitsMixString,simpilfy=simpilfy,percentConvert = percentConvert)
+            total = chineseToDigits(chineseDigitsMixString,percentConvert = percentConvert)
         except Exception as e:
             #返回类型不能是none 是空字符串
             total = ''
             errorChar.append(chineseDigitsMixString)
             errorMsg.append(str(e))
     else:
-        total = chineseToDigits(chineseDigitsMixString,simpilfy=simpilfy,percentConvert = percentConvert)
+        total = chineseToDigits(chineseDigitsMixString,percentConvert = percentConvert)
     return total
 
 
@@ -306,10 +291,10 @@ def standardChNumberConvert(chNumberString):
                     chNumberStringList.append(CHINESE_PURE_COUNTING_UNIT_LIST[lastCountingUnit - 1])
         except:
             pass
-    #检查是否是 万三  千四点五这种表述
+    #检查是否是 万三  千四点五这种表述 百三百四
     perCountSwitch = 0
     if len(chNumberStringList) >1:
-        if chNumberStringList[0] in ['千','万']:
+        if chNumberStringList[0] in ['千','万','百']:
             for i in range(1,len(chNumberStringList)):
                 #其余位数都是纯数字 才能执行
                 if chNumberStringList[i] in CHINESE_PURE_NUMBER_LIST:
@@ -393,18 +378,15 @@ def checkSignSeg(chineseNumberList):
         newChineseNumberList.append(newChNumberString)
     return newChineseNumberList
 
-def digitsToCHChars(mixedStringList,simplify=None):
+def digitsToCHChars(mixedStringList):
     resultList = []
-    simplifyList=[] 
     for mixedString in mixedStringList:
         if mixedString.startswith('.'):
             mixedString = '0'+mixedString
-        tempSimplify = simplify
         for key in digits_char_ch_dict.keys():
             if key in mixedString:
+                # 应当记录下来有转换，然后再操作  在核心函数里 通过小数点判断是否应该强制  
                 mixedString = mixedString.replace(key,digits_char_ch_dict.get(key))
-                #如果有数字转换 则simpilfy 强制为真  防止20万 变成二零万 最后 变成20000
-                tempSimplify = True
                 #应当是只要有百分号 就挪到前面 阿拉伯数字没有四百分之的说法
                 #防止这种 3%万 这种问题
                 for k in CHINESE_PER_COUNTING_STRING_LIST:
@@ -413,15 +395,13 @@ def digitsToCHChars(mixedStringList,simplify=None):
                         mixedString = temp
 
         resultList.append(mixedString)
-        simplifyList.append(tempSimplify)
-    return resultList,simplifyList
+    return resultList
 
 
 
-def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False,verbose=False,*args,**kwargs):
+def takeChineseNumberFromString(chText,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False,verbose=False,*args,**kwargs):
     """
     :param chText: chinese string
-    :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
     :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
     :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
     :param digitsNumberSwitch: Switch to convert the take pure digits number
@@ -457,13 +437,12 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
     OriginCHNumberTake = CHNumberStringListTemp.copy()
 
     #将阿拉伯数字变成汉字  不然合理性检查 以及后期 如果不是300万这种乘法  而是 四分之345  这种 就出错了
-    CHNumberStringListTemp,simpilfyListTemp = digitsToCHChars(CHNumberStringListTemp,simpilfy)
+    CHNumberStringListTemp = digitsToCHChars(CHNumberStringListTemp)
 
 
     #检查合理性 是否是单纯的单位  等
     CHNumberStringList= []
     OriginCHNumberForOutput = []
-    simpilfyList = []
     for i in range(len(CHNumberStringListTemp)):
         tempText = CHNumberStringListTemp[i]
         resonableResult = checkChineseNumberReasonable(tempText)
@@ -472,8 +451,6 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
             CHNumberStringList.append(resonableResult)
             #则添加把原始提取的添加进来
             OriginCHNumberForOutput.append(OriginCHNumberTake[i])
-            #把simplify 开关放进来
-            simpilfyList.append(simpilfyListTemp[i])
     #TODO 检查是否 时间格式 五点四十  七点一刻
 
     """
@@ -489,14 +466,14 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
     errorCharList = []
     errorMsgList = []
     if CHNumberStringListTemp.__len__()>0:
-        # digitsStringList = list(map(lambda x:chineseToDigits(x,simpilfy=simpilfy,percentConvert=percentConvert),CHNumberStringList))
+        # digitsStringList = list(map(lambda x:chineseToDigits(x,percentConvert=percentConvert),CHNumberStringList))
         # 用标准清洗后的字符串进行转换
         # digitsStringList = list(
-        #     map(lambda x: chineseToDigits(x, simpilfy=simpilfy, percentConvert=percentConvert), CHNumberStringListTemp))
+        #     map(lambda x: chineseToDigits(x,percentConvert=percentConvert), CHNumberStringListTemp))
 
         for kk in range(len(CHNumberStringListTemp)):
-            # digitsStringList.append(chineseToDigits(CHNumberStringListTemp[kk], simpilfy=simpilfyList[kk], percentConvert=percentConvert))
-            digitsStringList.append(chineseToDigitsHighTolerance(CHNumberStringListTemp[kk],simpilfy=simpilfyList[kk],percentConvert=percentConvert,skipError=verbose,errorChar=errorCharList,errorMsg=errorMsgList))
+            # digitsStringList.append(chineseToDigits(CHNumberStringListTemp[kk], percentConvert=percentConvert))
+            digitsStringList.append(chineseToDigitsHighTolerance(CHNumberStringListTemp[kk],percentConvert=percentConvert,skipError=verbose,errorChar=errorCharList,errorMsg=errorMsgList))
         # tupleToReplace = list(zip(OriginCHNumberForOutput,digitsStringList,list(map(len,OriginCHNumberForOutput))))
         tupleToReplace = [ (d,c,i) for d,c,i in zip(OriginCHNumberForOutput,digitsStringList,list(map(len,OriginCHNumberForOutput))) if c !='']
 
@@ -528,17 +505,16 @@ def takeChineseNumberFromString(chText,simpilfy=None,percentConvert = True,tradi
     return finalResult
 
 
-def takeNumberFromString(chText,simpilfy=None,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False, verbose=False, *args,**kwargs):
+def takeNumberFromString(chText,percentConvert = True,traditionalConvert= True,digitsNumberSwitch= False, verbose=False, *args,**kwargs):
     """
     :param chText: chinese string
-    :param simpilfy: convert type.Default is None which means check the string automatically. True means ignore all the counting unit and just convert the number.
     :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
     :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
     :param digitsNumberSwitch: Switch to convert the take pure digits number
     :param verbose: if true, will return words that raised exception and catch the error
     :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
     """
-    finalResult = takeChineseNumberFromString(chText,simpilfy=simpilfy,percentConvert = percentConvert,traditionalConvert= traditionalConvert,digitsNumberSwitch= digitsNumberSwitch,verbose=verbose)
+    finalResult = takeChineseNumberFromString(chText,percentConvert = percentConvert,traditionalConvert= traditionalConvert,digitsNumberSwitch= digitsNumberSwitch,verbose=verbose)
     return finalResult
 
 
@@ -573,6 +549,7 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
 if __name__=='__main__':
 
     #混合提取
+    print(takeNumberFromString('三零万二零千拉阿拉啦啦30万20千嚯嚯或百四嚯嚯嚯四百三十二分之2345啦啦啦啦',percentConvert=False))
     print(takeNumberFromString('百分之5负千分之15'))
     print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万'))
     #将百分比转为小数
