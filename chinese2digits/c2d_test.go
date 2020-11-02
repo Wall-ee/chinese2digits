@@ -90,7 +90,7 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) { // 使用t.Run()执行子测试
-			got := TakeNumberFromString(tc.input, tc.percentConvert, true, false)
+			got := TakeNumberFromString(tc.input, tc.percentConvert, true)
 
 			resultReplacedText := got.(map[string]interface{})["replacedText"]
 			resultCHNumberStringList := got.(map[string]interface{})["CHNumberStringList"]

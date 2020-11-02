@@ -233,15 +233,18 @@ func checkNumberSeg(chineseNumberList []string, originText string) []string {
 				if strings.HasPrefix(chineseNumberList[i], "分之") {
 					// #如果是以 分之 开头 那么检查他和他见面的汉子数字是不是连续的 即 是否在原始字符串出现
 					tempMixedString = string(chineseNumberList[i-1]) + string(chineseNumberList[i])
+					runeTempPreText := []rune(tempPreText)
 					if strings.Contains(originText, tempMixedString) {
 						// #如果连续的上一个字段是以分之开头的  本字段又以分之开头
 						if tempPreText != "" {
 							// #检查上一个字段的末尾是不是 以 百 十 万 的单位结尾
-							if isExistItem(tempPreText[len(tempPreText)], CHINESE_PURE_COUNTING_UNIT_LIST) > -1 {
+							if isExistItem(string(runeTempPreText[len(runeTempPreText)-1]), CHINESE_PURE_COUNTING_UNIT_LIST) > -1 {
+								//上一个字段最后一个数据
+								tempLastChineseNumber := []rune(newChineseNumberList[len(newChineseNumberList)-1])
 								// #先把上一个记录进去的最后一位去掉
-								newChineseNumberList[len(newChineseNumberList)] = newChineseNumberList[len(newChineseNumberList)][:len(newChineseNumberList)]
+								newChineseNumberList[len(newChineseNumberList)-1] = string(tempLastChineseNumber[:len(tempLastChineseNumber)-1])
 								// #如果结果是确定的，那么本次的字段应当加上上一个字段的最后一个字
-								newChineseNumberList = append(newChineseNumberList, string(tempPreText[len(newChineseNumberList)])+chineseNumberList[i])
+								newChineseNumberList = append(newChineseNumberList, string(runeTempPreText[len(runeTempPreText)-1])+chineseNumberList[i])
 							} else {
 								// #如果上一个字段不是以单位结尾  同时他又是以分之开头，那么 本次把分之去掉
 								newChineseNumberList = append(newChineseNumberList, chineseNumberList[i][2:])
@@ -274,6 +277,8 @@ func checkNumberSeg(chineseNumberList []string, originText string) []string {
 	return newChineseNumberList
 }
 
+var dotRightPartReplaceRule, regError5 = regexp.Compile("0+$")
+
 // ChineseToDigits 是可以识别包含百分号，正负号的函数，并控制是否将百分之10转化为0.1
 func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 	// """
@@ -282,6 +287,10 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 	finalTotal := ""
 	var convertResultList []string
 	var chineseCharsListByDiv []string
+	if regError5 != nil {
+		panic(regError5)
+	}
+
 	if strings.Contains(chineseCharsToTrans, "分之") {
 		chineseCharsListByDiv = strings.Split(chineseCharsToTrans, "分之")
 
@@ -332,18 +341,24 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 		} else {
 			convertResult = ""
 			tempBuf := bytes.Buffer{}
-
+			tempRightDigits := ""
 			if leftOfDotString == "" {
 				// """
 				// .01234 这种开头  用0 补位
 				// """
 				tempBuf.WriteString("0.")
-				tempBuf.WriteString(CoreCHToDigits(rightOfDotString))
+				tempRightDigits = CoreCHToDigits(rightOfDotString)
+				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
+				// tempBuf.WriteString(CoreCHToDigits(rightOfDotString))
+				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			} else {
 				tempBuf.WriteString(CoreCHToDigits(leftOfDotString))
 				tempBuf.WriteString(".")
-				tempBuf.WriteString(CoreCHToDigits(rightOfDotString))
+				tempRightDigits = CoreCHToDigits(rightOfDotString)
+				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
+				// tempBuf.WriteString(CoreCHToDigits(rightOfDotString))
+				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			}
 
@@ -368,11 +383,11 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 	if len(convertResultList) > 1 {
 		// #是否转换分号及百分比
 		if percentConvert == true {
-			tempFloat1, err1 := strconv.ParseFloat(convertResultList[1], 32)
+			tempFloat1, err1 := strconv.ParseFloat(convertResultList[1], 32/64)
 			if err1 != nil {
 				panic(err1)
 			} else {
-				tempFloat0, err0 := strconv.ParseFloat(convertResultList[0], 32)
+				tempFloat0, err0 := strconv.ParseFloat(convertResultList[0], 32/64)
 				if err0 != nil {
 					panic(err0)
 				} else {
@@ -393,6 +408,13 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 
 	} else {
 		finalTotal = convertResultList[0]
+		//最后再转换一下 防止出现 .50 的问题  不能转换了 否则  超出精度了………… 服了  5亿的话
+		// tempFinalTotal, err3 := strconv.ParseFloat(finalTotal, 32)
+		// if err3 != nil {
+		// 	panic(err3)
+		// } else {
+		// 	finalTotal = strconv.FormatFloat(tempFinalTotal, 'f', -1, 32)
+		// }
 	}
 
 	return finalTotal
@@ -642,27 +664,28 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 
 	var percentConvert bool
 	var traditionalConvert bool
-	digitsNumberSwitch := false
+	// var digitsNumberSwitch bool
+	// digitsNumberSwitch := false
 
 	switch len(opt) {
 	case 1:
 		percentConvert = opt[0].(bool)
 		traditionalConvert = true
-		digitsNumberSwitch = false
+		// digitsNumberSwitch = false
 	case 2:
 		percentConvert = opt[0].(bool)
 		traditionalConvert = opt[1].(bool)
-		digitsNumberSwitch = false
-	case 3:
-		percentConvert = opt[0].(bool)
-		traditionalConvert = opt[1].(bool)
-		digitsNumberSwitch = opt[2].(bool)
+		// digitsNumberSwitch = false
+	// case 3:
+	// 	percentConvert = opt[0].(bool)
+	// 	traditionalConvert = opt[1].(bool)
+	// digitsNumberSwitch = opt[2].(bool)
 	default:
 		percentConvert = true
 		traditionalConvert = true
 	}
 
-	fmt.Println(digitsNumberSwitch)
+	// fmt.Println(digitsNumberSwitch)
 
 	//"""
 	//简体转换开关
@@ -764,37 +787,36 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 // :param chText: chinese string
 // :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
 // :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
-// :param digitsNumberSwitch: Optional, default is false. Switch to convert the take pure digits number
 // :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
 func TakeNumberFromString(chTextString string, opt ...interface{}) interface{} {
 
 	//默认参数设置
-	if len(opt) > 3 {
+	if len(opt) > 2 {
 		panic("too many arguments")
 	}
 
 	var percentConvert bool
 	var traditionalConvert bool
-	digitsNumberSwitch := false
+	// digitsNumberSwitch := false
 
 	switch len(opt) {
 	case 1:
 		percentConvert = opt[0].(bool)
 		traditionalConvert = true
-		digitsNumberSwitch = false
+		// digitsNumberSwitch = false
 	case 2:
 		percentConvert = opt[0].(bool)
 		traditionalConvert = opt[1].(bool)
-		digitsNumberSwitch = false
-	case 3:
-		percentConvert = opt[0].(bool)
-		traditionalConvert = opt[1].(bool)
-		digitsNumberSwitch = opt[2].(bool)
+		// digitsNumberSwitch = false
+	// case 3:
+	// 	percentConvert = opt[0].(bool)
+	// 	traditionalConvert = opt[1].(bool)
+	// digitsNumberSwitch = opt[2].(bool)
 	default:
 		percentConvert = true
 		traditionalConvert = true
 	}
-	finalResult := TakeChineseNumberFromString(chTextString, percentConvert, traditionalConvert, digitsNumberSwitch)
+	finalResult := TakeChineseNumberFromString(chTextString, percentConvert, traditionalConvert)
 	return finalResult
 }
 
