@@ -56,15 +56,11 @@ import chinese2digits as c2d
 
 #混合提取
 print(c2d.takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万'))
+print(c2d.takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八'))
 
 #将百分比转为小数
 print(c2d.takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
 
-#使用正则表达式
-print(c2d.takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八'))
-
-#使用普通顺序逻辑引擎
-print(c2d.takeChineseNumberFromString('负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八',method='normal'))
 
 #案例
 
@@ -98,10 +94,9 @@ import (
 )
 
 func main() {
-	fmt.Println(chinese2digits.TakeNumberFromString("十万啦啦啦300万nihao400十五点八"))
-	fmt.Println("输入：负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八")
+	fmt.Println(chinese2digits.TakeNumberFromString("伍亿柒仟万拾柒今天天气不错百分之三亿二百万五啦啦啦啦负百分之点二八你好啊三万二"))
+	fmt.Println("输入：伍亿柒仟万拾柒今天天气不错百分之三亿二百万五啦啦啦啦负百分之点二八你好啊三万二")
 	fmt.Println("输出：TakeChineseNumberFromString 方法")
-	fmt.Println(chinese2digits.TakeChineseNumberFromString("负百分之点二八你好啊百分之三五是不是点伍零百分之负六十五点二八", nil, true))
 }
 
 ```
@@ -109,14 +104,17 @@ func main() {
 
 ## 更新时间
 ## Update Time
-    #     #TODO 应当判断当前的汉字 与后一个提取的汉子数字 是否是连续的在原始字符串出现的，如果非连续 就出现了问题 比如  7分之前三四五
-    #     #TODO  另外 十分之 也需要处理
-    #     #TODO  4分之三 这种也要处理
-	#TODO 需要升级正则， 提供一个混合提取的正则表达式
-	#      TODO 升级一下  4百分之一 这种识别 
-	#  最后的.0 去掉  精确地展示整数
-	# 增加单元测试方法 方便开发
-	# 不再需要simpilify 规则 可以识别更加复杂的混合 四百三十儿分之43    30万2千这种
+>2020-11-02
+* 重大更新及接口更新
+* 不再需要simpilify 规则 可以识别更加复杂的混合 四百三十儿分之43    30万2千这种
+* 修复bug: 判断当前的汉字 与后一个提取的汉子数字 是否是连续的在原始字符串出现的，如果非连续 就出现了问题 比如  7分之前三四五
+* 4分之三 4百分之一 混合识别及减少误识别
+* 升级正则， 提供一个混合提取的正则表达式
+* 七点十分之前  不会误识别 
+* 最后的.0 去掉  精确地展示整数
+* Go语言精简接口
+* 增加单元测试方法 方便开发
+
 
 
 >2020-05-31
