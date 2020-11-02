@@ -200,7 +200,6 @@ def chineseToDigitsHighTolerance(chineseDigitsMixString,percentConvert = True, s
 
 
 def checkChineseNumberReasonable(chNumber):
-    result = ''
     if chNumber.__len__()>0:
         #由于在上个检查点 已经把阿拉伯数字转为中文 因此不用检查阿拉伯数字部分
         """
@@ -209,8 +208,8 @@ def checkChineseNumberReasonable(chNumber):
         for i in CHINESE_PURE_NUMBER_LIST:
             if i in chNumber:
                 #只要有数字在字符串 就说明不是 千千万万这种只有单位的表述
-                return chNumber
-    return result
+                return True
+    return False
 
 """
 繁体简体转换 及  单位  特殊字符转换 两千变二千
@@ -445,10 +444,9 @@ def takeChineseNumberFromString(chText,percentConvert = True,traditionalConvert=
     OriginCHNumberForOutput = []
     for i in range(len(CHNumberStringListTemp)):
         tempText = CHNumberStringListTemp[i]
-        resonableResult = checkChineseNumberReasonable(tempText)
-        if resonableResult != '':
+        if checkChineseNumberReasonable(tempText):
             #如果合理  则添加进被转换列表
-            CHNumberStringList.append(resonableResult)
+            CHNumberStringList.append(tempText)
             #则添加把原始提取的添加进来
             OriginCHNumberForOutput.append(OriginCHNumberTake[i])
     #TODO 检查是否 时间格式 五点四十  七点一刻
