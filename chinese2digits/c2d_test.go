@@ -27,7 +27,7 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 			CHNumberStringList: []string{"百分之5", "负千分之15"},
 			digitsStringList:   []string{"0.05", "-0.015"}},
 		"1": {input: "三零万二零千拉阿拉啦啦30万20千嚯嚯或百四嚯嚯嚯四百三十二分之2345啦啦啦啦",
-			percentConvert:     true,
+			percentConvert:     false,
 			replacedText:       "320000拉阿拉啦啦30000020000嚯嚯或4%嚯嚯嚯2345/432啦啦啦啦",
 			CHNumberStringList: []string{"三零万二零千", "30万", "20千", "百四", "四百三十二分之2345"},
 			digitsStringList:   []string{"320000", "300000", "20000", "4%", "2345/432"}},
@@ -82,7 +82,8 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 			CHNumberStringList: []string{"五亿七千万十七百"},
 			digitsStringList:   []string{"570001700"}},
 		"12": {input: "负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八",
-			percentConvert:     true,
+			percentConvert: true,
+			//注意这里可能有 float 的浮点问题要处理
 			replacedText:       "-0.0028你好啊0.35是不是0.5-0.6528",
 			CHNumberStringList: []string{"负百分之点二八", "百分之三五", "点五零", "百分之负六十五点二八"},
 			digitsStringList:   []string{"-0.0028", "0.35", "0.5", "-0.6528"}},

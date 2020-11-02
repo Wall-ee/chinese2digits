@@ -667,7 +667,7 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	//"""
 	//简体转换开关
 	//"""
-	originText := chTextString
+	// originText := chTextString
 
 	convertedString := traditionalTextConvertFunc(chTextString, traditionalConvert)
 
@@ -686,7 +686,7 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	}
 
 	// ##检查是不是  分之 切割不完整问题
-	CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp, originText)
+	CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp, convertedString)
 
 	// 检查最后是正负号的问题
 	CHNumberStringListTemp = checkSignSeg(CHNumberStringListTemp)
@@ -725,7 +725,7 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 	//将中文转换为数字
 	//"""
 	digitsStringList := []string{}
-	replacedText := chTextString
+	replacedText := convertedString
 	tempCHToDigitsResult := ""
 	CHNumberStringLenList := []int{}
 	structCHAndDigitSlice := []structCHAndDigit{}
@@ -733,9 +733,10 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 		for i := 0; i < len(CHNumberStringListTemp); i++ {
 			tempCHToDigitsResult = ChineseToDigits(CHNumberStringListTemp[i], percentConvert)
 			digitsStringList = append(digitsStringList, tempCHToDigitsResult)
-			CHNumberStringLenList = append(CHNumberStringLenList, len(CHNumberStringListTemp[i]))
+			// CHNumberStringLenList = append(CHNumberStringLenList, len(CHNumberStringListTemp[i]))
+			CHNumberStringLenList = append(CHNumberStringLenList, len(OriginCHNumberForOutput[i]))
 			//将每次的新结构体附加至准备排序的
-			structCHAndDigitSlice = append(structCHAndDigitSlice, structCHAndDigit{CHNumberStringListTemp[i], digitsStringList[i], CHNumberStringLenList[i]})
+			structCHAndDigitSlice = append(structCHAndDigitSlice, structCHAndDigit{OriginCHNumberForOutput[i], digitsStringList[i], CHNumberStringLenList[i]})
 		}
 		//fmt.Println(structCHAndDigitSlice)
 
@@ -750,7 +751,7 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 
 	}
 	finalResult := map[string]interface{}{
-		"inputText":          originText,
+		"inputText":          chTextString,
 		"replacedText":       replacedText,
 		"CHNumberStringList": OriginCHNumberForOutput,
 		"digitsStringList":   digitsStringList,

@@ -417,17 +417,17 @@ def takeChineseNumberFromString(chText,percentConvert = True,traditionalConvert=
     """
     简体转换开关
     """
-    originText = chText
+    # originText = chText
 
-    chText = traditionalTextConvertFunc(chText,traditionalConvert)
+    convertedCHString = traditionalTextConvertFunc(chText,traditionalConvert)
 
     """
     字符串 汉字数字字符串切割提取
     正则表达式方法
     """
-    CHNumberStringListTemp = takingChineseDigitsMixRERules.findall(chText)
+    CHNumberStringListTemp = takingChineseDigitsMixRERules.findall(convertedCHString)
     #检查是不是  分之 切割不完整问题
-    CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp,originText)
+    CHNumberStringListTemp = checkNumberSeg(CHNumberStringListTemp,convertedCHString)
 
     #检查末位是不是正负号
     CHNumberStringListTemp = checkSignSeg(CHNumberStringListTemp)
@@ -460,7 +460,7 @@ def takeChineseNumberFromString(chText,percentConvert = True,traditionalConvert=
     将中文转换为数字
     """
     digitsStringList = []
-    replacedText = chText
+    replacedText = convertedCHString
     errorCharList = []
     errorMsgList = []
     if CHNumberStringListTemp.__len__()>0:
@@ -493,7 +493,7 @@ def takeChineseNumberFromString(chText,percentConvert = True,traditionalConvert=
     #     'digitsStringList':digitsStringList
     # }
     finalResult = {
-        'inputText':originText,
+        'inputText':chText,
         'replacedText':replacedText,
         'CHNumberStringList':OriginCHNumberForOutput,
         'digitsStringList':digitsStringList,
