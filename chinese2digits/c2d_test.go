@@ -33,14 +33,14 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 			digitsStringList:   []string{"320000", "300000", "20000", "4%", "2345/432"}},
 		"2": {input: "啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万",
 			percentConvert:     true,
-			replacedText:       "啊啦啦啦30000000你好我2000000.003你好啊300咯咯咯-0.0034啦啦啦3000000",
+			replacedText:       "啊啦啦啦30000000你好我20000030你好啊300咯咯咯-0.0034啦啦啦3000000",
 			CHNumberStringList: []string{"300十万", "20万", ".3%万", "300", "-.34%", "300万"},
-			digitsStringList:   []string{"30000000", "200000", "0.003", "300", "-0.0034", "3000000"}},
+			digitsStringList:   []string{"30000000", "200000", "30", "300", "-0.0034", "3000000"}},
 		"3": {input: "aaaa.3%万",
 			percentConvert:     true,
-			replacedText:       "aaaa0.003",
+			replacedText:       "aaaa30",
 			CHNumberStringList: []string{".3%万"},
-			digitsStringList:   []string{"0.003"}},
+			digitsStringList:   []string{"30"}},
 		"4": {input: "十分之一",
 			percentConvert:     true,
 			replacedText:       "0.1",
@@ -87,6 +87,12 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 			replacedText:       "-0.0028你好啊0.35是不是0.5-0.6528",
 			CHNumberStringList: []string{"负百分之点二八", "百分之三五", "点五零", "百分之负六十五点二八"},
 			digitsStringList:   []string{"-0.0028", "0.35", "0.5", "-0.6528"}},
+		"13": {input: "2.55万nonono3.1千万",
+			percentConvert: true,
+			//注意这里可能有 float 的浮点问题要处理
+			replacedText:       "25500nonono31000000",
+			CHNumberStringList: []string{"2.55万", "3.1千万"},
+			digitsStringList:   []string{"25500", "31000000'"}},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) { // 使用t.Run()执行子测试

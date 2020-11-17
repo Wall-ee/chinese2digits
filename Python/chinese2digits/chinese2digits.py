@@ -148,6 +148,19 @@ def chineseToDigits(chineseDigitsMixString,percentConvert = True,*args,**kwargs)
             convertResult = coreCHToDigits(chineseChars)
         else:
             convertResult = ''
+            #如果小数点右侧有 单位 比如 2.55万  4.3百万 的处理方式
+            #先把小数点右侧单位去掉
+            tempCountString = ''
+            for ii in range(len(chineseCharsDotSplitList[-1]) - 1, -1, -1):
+                if chineseCharsDotSplitList[-1][ii] in ['千','百','万']:
+                    tempCountString = chineseCharsDotSplitList[-1][ii] + tempCountString
+                else:
+                    chineseCharsDotSplitList[-1] = chineseCharsDotSplitList[-1][0:(ii+1)]
+                    break
+            if tempCountString != '':
+                tempCountNum = float(coreCHToDigits(tempCountString))
+            else:
+                tempCountNum = 1.0
             if chineseCharsDotSplitList[0] == '':
                 """
                 .01234 这种开头  用0 补位
@@ -155,6 +168,8 @@ def chineseToDigits(chineseDigitsMixString,percentConvert = True,*args,**kwargs)
                 convertResult = '0.'+ coreCHToDigits(chineseCharsDotSplitList[1])
             else:
                 convertResult = coreCHToDigits(chineseCharsDotSplitList[0]) + '.' + coreCHToDigits(chineseCharsDotSplitList[1])
+            
+            convertResult = str(float(convertResult)*tempCountNum)
         """
         如果 convertResult 是空字符串， 表示可能整体字符串是 负百分之10 这种  或者 -百分之10
         """
@@ -546,6 +561,7 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
 
 if __name__=='__main__':
 
+    print(takeNumberFromString('12.55万'))
     #混合提取
     print(takeNumberFromString('三零万二零千拉阿拉啦啦30万20千嚯嚯或百四嚯嚯嚯四百三十二分之2345啦啦啦啦',percentConvert=False))
     print(takeNumberFromString('百分之5负千分之15'))

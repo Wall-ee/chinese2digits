@@ -17,17 +17,22 @@ class TestDict(unittest.TestCase):
         self.assertEqual(result['CHNumberStringList'], ['百分之5', '负千分之15'])
         self.assertEqual(result['digitsStringList'], ['0.05', '-0.015'])
 
+        result = c2d.takeNumberFromString('2.55万nonono3.1千万')
+        self.assertEqual(result['replacedText'], '25500nonono31000000')
+        self.assertEqual(result['CHNumberStringList'], ['2.55万','3.1千万'])
+        self.assertEqual(result['digitsStringList'], ['25500','31000000'])
+
         result = c2d.takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万')
-        self.assertEqual(result['replacedText'], '啊啦啦啦30000000你好我2000000.003你好啊300咯咯咯-0.0034啦啦啦3000000')
+        self.assertEqual(result['replacedText'], '啊啦啦啦30000000你好我20000030你好啊300咯咯咯-0.0034啦啦啦3000000')
         self.assertEqual(result['CHNumberStringList'], ['300十万', '20万', '.3%万', '300', '-.34%', '300万'])
-        self.assertEqual(result['digitsStringList'], ['30000000', '200000', '0.003', '300', '-0.0034', '3000000'])
+        self.assertEqual(result['digitsStringList'], ['30000000', '200000', '30', '300', '-0.0034', '3000000'])
 
     def test_percentage_convert(self):
         print('===========testing percentage convert============')
         result = c2d.takeNumberFromString('aaaa.3%万')
-        self.assertEqual(result['replacedText'], 'aaaa0.003')
+        self.assertEqual(result['replacedText'], 'aaaa30')
         self.assertEqual(result['CHNumberStringList'], ['.3%万'])
-        self.assertEqual(result['digitsStringList'], ['0.003'])
+        self.assertEqual(result['digitsStringList'], ['30'])
 
     def test_rational_number(self):
         print('===========testing rational number convert============')

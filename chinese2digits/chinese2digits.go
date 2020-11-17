@@ -342,6 +342,29 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 			convertResult = ""
 			tempBuf := bytes.Buffer{}
 			tempRightDigits := ""
+			// #如果小数点右侧有 单位 比如 2.55万  4.3百万 的处理方式
+			// #先把小数点右侧单位去掉
+			tempCountString := ""
+			listOfRight := []rune(rightOfDotString)
+			for ii := len(rightOfDotString) - 1; ii > 0; ii-- {
+				if isExistItem(string(listOfRight[ii]), []string{"千", "万", "百"}) > -1 {
+					tempCountString = string(listOfRight[ii]) + tempCountString
+				} else {
+					rightOfDotString = string(listOfRight[0:(ii + 1)])
+					break
+				}
+			}
+
+			tempCountNum := 1.0
+			if tempCountString != "" {
+				tempNum, errTemp := strconv.ParseFloat(CoreCHToDigits(tempCountString), 32/64)
+				if errTemp != nil {
+					panic(errTemp)
+				} else {
+					tempCountNum = tempNum
+				}
+			}
+
 			if leftOfDotString == "" {
 				// """
 				// .01234 这种开头  用0 补位
@@ -360,6 +383,13 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 				// tempBuf.WriteString(CoreCHToDigits(rightOfDotString))
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
+			}
+
+			tempStrToFloat, errTemp1 := strconv.ParseFloat(convertResult, 32/64)
+			if errTemp1 != nil {
+				panic(errTemp1)
+			} else {
+				convertResult = strconv.FormatFloat(tempStrToFloat*tempCountNum, 'f', -1, 32)
 			}
 
 		}
