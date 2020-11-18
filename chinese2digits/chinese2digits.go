@@ -346,7 +346,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 			// #先把小数点右侧单位去掉
 			tempCountString := ""
 			listOfRight := []rune(rightOfDotString)
-			for ii := len(rightOfDotString) - 1; ii > 0; ii-- {
+			for ii := len(listOfRight) - 1; ii > 0; ii-- {
 				if isExistItem(string(listOfRight[ii]), []string{"千", "万", "百"}) > -1 {
 					tempCountString = string(listOfRight[ii]) + tempCountString
 				} else {

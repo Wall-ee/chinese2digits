@@ -88,11 +88,10 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 			CHNumberStringList: []string{"负百分之点二八", "百分之三五", "点五零", "百分之负六十五点二八"},
 			digitsStringList:   []string{"-0.0028", "0.35", "0.5", "-0.6528"}},
 		"13": {input: "2.55万nonono3.1千万",
-			percentConvert: true,
-			//注意这里可能有 float 的浮点问题要处理
+			percentConvert:     true,
 			replacedText:       "25500nonono31000000",
 			CHNumberStringList: []string{"2.55万", "3.1千万"},
-			digitsStringList:   []string{"25500", "31000000'"}},
+			digitsStringList:   []string{"25500", "31000000"}},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) { // 使用t.Run()执行子测试
