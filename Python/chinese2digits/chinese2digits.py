@@ -558,6 +558,44 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
         'digitsStringList':digitsStringList
     }
     return finalResult
+  
+#从汉字数字金额提取出数值，如果存在意外字符则报错（已去除两侧空白字符）
+def takeChineseMoneyFromString(chText, traditionalConvert=True):
+    """
+        :param chText: chinese string，one chinese money
+        :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
+        :return: Float like result. digitNumber
+    """
+    chText=chText.strip()
+    replaceString=['元','整','角','分']
+    for i in replaceString:
+        if chText.count(i) > 1:
+            print('输出不合法，出现%s多次：%s'%(i,chText))
+            return None
+    chText1=chText.replace('整','')
+    list1=chText1.split('元')
+    len1=len(list1)
+    finalResult=0
+    for i in range(len1):
+        tmpchText=list1[i]
+        if tmpchText=='':
+            continue
+        if i==1:
+            #因为这里源代码中的小数转换有bug（零点零三会转换为0.3），所以使用百分转换
+            tmpchText='百分之'+tmpchText.replace('分','').replace('角','十')
+        firstResult=takeChineseNumberFromString(tmpchText,traditionalConvert=traditionalConvert)
+        if len(firstResult['errorWordList'])>0 or len(firstResult['errorMsgList']):
+            print('原转换函数发生错误，转换结果如下：')
+            print(firstResult)
+            return None
+        #这个条件是为了只转换一组数据，并且存在意外字符时返回空，如果不需要这个条件可以注释掉这一个elif段
+        elif len(firstResult['digitsStringList'])>1 or len(firstResult['CHNumberStringList'][0])!=len(tmpchText):
+            print('存在意外字符，或者多组数据，不合法，返回空，原转换函数结果如下：')
+            print(firstResult)
+            return None
+        else:
+            finalResult+=float(firstResult['digitsStringList'][0])
+    return finalResult
 
 if __name__=='__main__':
 
