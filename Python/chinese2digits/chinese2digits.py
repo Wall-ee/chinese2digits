@@ -580,7 +580,7 @@ def takeChineseMoneyFromString(chText, traditionalConvert=True):
         tmpchText=list1[i]
         if tmpchText=='':
             continue
-        if i==1:
+        if '角' in tmpchText or '分' in tmpchText:
             #因为这里源代码中的小数转换有bug（零点零三会转换为0.3），所以使用百分转换
             tmpchText='百分之'+tmpchText.replace('分','').replace('角','十')
         firstResult=takeChineseNumberFromString(tmpchText,traditionalConvert=traditionalConvert)
