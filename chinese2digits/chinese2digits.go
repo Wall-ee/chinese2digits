@@ -89,7 +89,7 @@ func maxValueInArray(arrayToCalc []int) int {
 }
 
 // CoreCHToDigits 是核心转化函数
-func CoreCHToDigits(chineseCharsToTrans string) string {
+func CoreCHToDigits(chineseCharsToTrans string,dotPosition int) string {
 	chineseChars := []rune(chineseCharsToTrans)
 	total := ""
 	tempVal := ""                      //#用以记录临时是否建议数字拼接的字符串 例如 三零万 的三零
@@ -99,39 +99,53 @@ func CoreCHToDigits(chineseCharsToTrans string) string {
 	tempTotal := 0
 	// countingUnit := 1
 	// 表示单位：个十百千...
-	for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
-		charToGet := string(chineseChars[i])
-		val, _ := chineseCharNumberDict[charToGet]
-		if (val >= 10) && (i == 0) {
-			// 应对 十三 十四 十*之类
-			if val > countingUnit {
-				countingUnit = val
-				tempTotal = tempTotal + val
-				countingUnitFromString = append(countingUnitFromString, val)
-			} else {
-				countingUnitFromString = append(countingUnitFromString, val)
-				// countingUnit = countingUnit * val
-				countingUnit = maxValueInArray(countingUnitFromString) * val
-			}
-		} else if val >= 10 {
-			if val > countingUnit {
-				countingUnit = val
-				countingUnitFromString = append(countingUnitFromString, val)
-			} else {
-				// countingUnit = countingUnit * val
-				countingUnitFromString = append(countingUnitFromString, val)
-				countingUnit = maxValueInArray(countingUnitFromString) * val
-			}
-		} else {
-			if i > 0 {
-				// #如果下一个不是单位 则本次也是拼接
-				preValTemp, _ := chineseCharNumberDict[string(chineseChars[i-1])]
-				if preValTemp < 10 {
-					tempVal = strconv.Itoa(val) + tempVal
+	if dotPosition = 0 {
+		//如果是小数点左边 正常执行 考虑各种单位等等
+		for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
+			charToGet := string(chineseChars[i])
+			val, _ := chineseCharNumberDict[charToGet]
+			if (val >= 10) && (i == 0) {
+				// 应对 十三 十四 十*之类
+				if val > countingUnit {
+					countingUnit = val
+					tempTotal = tempTotal + val
+					countingUnitFromString = append(countingUnitFromString, val)
 				} else {
-					// #说明已经有大于10的单位插入 要数学计算了
-					// #先拼接再计算
-					// #如果取值不大于10 说明是0-9 则继续取值 直到取到最近一个大于10 的单位   应对这种30万20千 这样子
+					countingUnitFromString = append(countingUnitFromString, val)
+					// countingUnit = countingUnit * val
+					countingUnit = maxValueInArray(countingUnitFromString) * val
+				}
+			} else if val >= 10 {
+				if val > countingUnit {
+					countingUnit = val
+					countingUnitFromString = append(countingUnitFromString, val)
+				} else {
+					// countingUnit = countingUnit * val
+					countingUnitFromString = append(countingUnitFromString, val)
+					countingUnit = maxValueInArray(countingUnitFromString) * val
+				}
+			} else {
+				if i > 0 {
+					// #如果下一个不是单位 则本次也是拼接
+					preValTemp, _ := chineseCharNumberDict[string(chineseChars[i-1])]
+					if preValTemp < 10 {
+						tempVal = strconv.Itoa(val) + tempVal
+					} else {
+						// #说明已经有大于10的单位插入 要数学计算了
+						// #先拼接再计算
+						// #如果取值不大于10 说明是0-9 则继续取值 直到取到最近一个大于10 的单位   应对这种30万20千 这样子
+						tempValInt, err := strconv.Atoi(strconv.Itoa(val) + tempVal)
+						if err != nil {
+							panic(err)
+						} else {
+							tempTotal = tempTotal + countingUnit*tempValInt
+						}
+						// #计算后 把临时字符串置位空
+						tempVal = ""
+					}
+
+				} else {
+					// #那就是无论如何要收尾了
 					tempValInt, err := strconv.Atoi(strconv.Itoa(val) + tempVal)
 					if err != nil {
 						panic(err)
@@ -142,28 +156,24 @@ func CoreCHToDigits(chineseCharsToTrans string) string {
 					tempVal = ""
 				}
 
-			} else {
-				// #那就是无论如何要收尾了
-				tempValInt, err := strconv.Atoi(strconv.Itoa(val) + tempVal)
-				if err != nil {
-					panic(err)
-				} else {
-					tempTotal = tempTotal + countingUnit*tempValInt
-				}
-				// #计算后 把临时字符串置位空
-				tempVal = ""
 			}
+			//如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
+			if (tempTotal == 0) && (countingUnit) > 10 {
+				// 转化为字符串
+				total = strconv.Itoa(countingUnit)
 
+			} else {
+				// 转化为字符串
+				total = strconv.Itoa(tempTotal)
+			}
 		}
-		//如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
-		if (tempTotal == 0) && (countingUnit) > 10 {
-			// 转化为字符串
-			total = strconv.Itoa(countingUnit)
-
-		} else {
-			// 转化为字符串
-			total = strconv.Itoa(tempTotal)
-		}
+	}else {
+		//小数点右边，便捷执行，考虑 零零五六这种情况
+		for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
+			charToGet := string(chineseChars[i])
+			val, _ := chineseCharNumberDict[charToGet]
+			tempTotal = tempTotal + val
+		total = tempTotal
 	}
 	newTotalTemp := []rune(total)
 	newTotal := ""
@@ -337,7 +347,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 		}
 		convertResult := ""
 		if !stringContainDot {
-			convertResult = CoreCHToDigits(tempChineseChars)
+			convertResult = CoreCHToDigits(tempChineseChars,0)
 		} else {
 			convertResult = ""
 			tempBuf := bytes.Buffer{}
@@ -357,7 +367,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 
 			tempCountNum := 1.0
 			if tempCountString != "" {
-				tempNum, errTemp := strconv.ParseFloat(CoreCHToDigits(tempCountString), 32/64)
+				tempNum, errTemp := strconv.ParseFloat(CoreCHToDigits(tempCountString,0), 32/64)
 				if errTemp != nil {
 					panic(errTemp)
 				} else {
@@ -370,17 +380,15 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 				// .01234 这种开头  用0 补位
 				// """
 				tempBuf.WriteString("0.")
-				tempRightDigits = CoreCHToDigits(rightOfDotString)
+				tempRightDigits = CoreCHToDigits(rightOfDotString,1)
 				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
-				// tempBuf.WriteString(CoreCHToDigits(rightOfDotString))
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			} else {
-				tempBuf.WriteString(CoreCHToDigits(leftOfDotString))
+				tempBuf.WriteString(CoreCHToDigits(leftOfDotString,0))
 				tempBuf.WriteString(".")
-				tempRightDigits = CoreCHToDigits(rightOfDotString)
+				tempRightDigits = CoreCHToDigits(rightOfDotString,1)
 				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
-				// tempBuf.WriteString(CoreCHToDigits(rightOfDotString))
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			}

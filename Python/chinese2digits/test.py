@@ -52,10 +52,10 @@ class TestDict(unittest.TestCase):
         self.assertEqual(result['CHNumberStringList'], ['4分之3', '负五分之6', '四百分之16'])
         self.assertEqual(result['digitsStringList'], ['0.75', '-1.2', '4.16'])
 
-        result = c2d.takeNumberFromString('百分之四百三十二万分之四三千分之五')
-        self.assertEqual(result['replacedText'], '4.320.00430.005')
-        self.assertEqual(result['CHNumberStringList'], ['百分之四百三十二', '万分之四三', '千分之五'])
-        self.assertEqual(result['digitsStringList'],  ['4.32', '0.0043', '0.005'])
+        result = c2d.takeNumberFromString('百分之四百三十二万分之四三千分之五今天天气不错三百四十点零零三四')
+        self.assertEqual(result['replacedText'], '4.320.00430.005今天天气不错340.0034')
+        self.assertEqual(result['CHNumberStringList'], ['百分之四百三十二', '万分之四三', '千分之五','三百四十点零零三四'])
+        self.assertEqual(result['digitsStringList'],  ['4.32', '0.0043', '0.005','340.0034'])
 
     def test_complex_convert(self):
         print('===========testing complex convert============')

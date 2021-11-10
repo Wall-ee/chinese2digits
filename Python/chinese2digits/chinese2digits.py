@@ -54,57 +54,65 @@ DIGITS_CONNECTING_SIGN_LIST = ['.']
 DIGITS_PER_COUNTING_STRING_LIST = ['%','‰','‱']
 takingDigitsRERule = re.compile('(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})')
 
-def coreCHToDigits(chineseChars):
+def coreCHToDigits(chineseChars,dotPosition=0):
     total = 0
     tempVal = '' #用以记录临时是否建议数字拼接的字符串 例如 三零万 的三零
     countingUnit = 1              #表示单位：个十百千,用以计算单位相乘 例如八百万 百万是相乘的方法，但是如果万前面有 了一千八百万 这种，千和百不能相乘，要相加...
-    countingUnitFromString = [1]                            #原始字符串提取的单位应该是一个list  在计算的时候，新的单位应该是本次取得的数字乘以已经发现的最大单位，例如 4千三百五十万， 等于 4000万+300万+50万
-    for i in range(len(chineseChars) - 1, -1, -1):
-        val = common_used_ch_numerals.get(chineseChars[i])
-        if val >= 10 and i == 0:  #应对 十三 十四 十*之类，说明为十以上的数字，看是不是十三这种
-            #说明循环到了第一位 也就是最后一个循环 看看是不是单位开头
-            #取最近一次的单位
-            if val > countingUnit:  #如果val大于 contingUnit 说明 是以一个更大的单位开头 例如 十三 千二这种
-                countingUnit = val   #赋值新的计数单位
-                total = total + val    #总值等于  全部值加上新的单位 类似于13 这种
-                countingUnitFromString.append(val)
-            else:
-                countingUnitFromString.append(val)
-                # 计算用的单位是最新的单位乘以字符串中最大的原始单位  为了计算四百万这种
-                # countingUnit = countingUnit * val
-                countingUnit = max(countingUnitFromString) * val
-                #total =total + r * x
-        elif val >= 10:
-            if val > countingUnit:
-                countingUnit = val
-                countingUnitFromString.append(val)
-            else:
-                countingUnitFromString.append(val)
-                # 计算用的单位是最新的单位乘以字符串中最大的原始单位 为了计算四百万这种
-                # countingUnit = countingUnit * val
-                countingUnit = max(countingUnitFromString) * val
-        else:
-            if i > 0 :
-                #如果下一个不是单位 则本次也是拼接
-                if common_used_ch_numerals.get(chineseChars[i-1]) <10:
-                    tempVal = str(val) + tempVal
+    countingUnitFromString = [1]   #原始字符串提取的单位应该是一个list  在计算的时候，新的单位应该是本次取得的数字乘以已经发现的最大单位，例如 4千三百五十万， 等于 4000万+300万+50万
+    if dotPosition == 0:
+        #如果是小数点左边，正常执行
+        for i in range(len(chineseChars) - 1, -1, -1):
+            val = common_used_ch_numerals.get(chineseChars[i])
+            if val >= 10 and i == 0:  #应对 十三 十四 十*之类，说明为十以上的数字，看是不是十三这种
+                #说明循环到了第一位 也就是最后一个循环 看看是不是单位开头
+                #取最近一次的单位
+                if val > countingUnit:  #如果val大于 contingUnit 说明 是以一个更大的单位开头 例如 十三 千二这种
+                    countingUnit = val   #赋值新的计数单位
+                    total = total + val    #总值等于  全部值加上新的单位 类似于13 这种
+                    countingUnitFromString.append(val)
                 else:
-                    #说明已经有大于10的单位插入 要数学计算了
-                    #先拼接再计算
-                    #如果取值不大于10 说明是0-9 则继续取值 直到取到最近一个大于10 的单位   应对这种30万20千 这样子
-                    total = total + countingUnit * int(str(val) + tempVal)            
-                    #计算后 把临时字符串置位空
-                    tempVal = ''
+                    countingUnitFromString.append(val)
+                    # 计算用的单位是最新的单位乘以字符串中最大的原始单位  为了计算四百万这种
+                    # countingUnit = countingUnit * val
+                    countingUnit = max(countingUnitFromString) * val
+                    #total =total + r * x
+            elif val >= 10:
+                if val > countingUnit:
+                    countingUnit = val
+                    countingUnitFromString.append(val)
+                else:
+                    countingUnitFromString.append(val)
+                    # 计算用的单位是最新的单位乘以字符串中最大的原始单位 为了计算四百万这种
+                    # countingUnit = countingUnit * val
+                    countingUnit = max(countingUnitFromString) * val
             else:
-                #那就是无论如何要收尾了
-                total = total + countingUnit * int(str(val) + tempVal)
+                if i > 0 :
+                    #如果下一个不是单位 则本次也是拼接
+                    if common_used_ch_numerals.get(chineseChars[i-1]) <10:
+                        tempVal = str(val) + tempVal
+                    else:
+                        #说明已经有大于10的单位插入 要数学计算了
+                        #先拼接再计算
+                        #如果取值不大于10 说明是0-9 则继续取值 直到取到最近一个大于10 的单位   应对这种30万20千 这样子
+                        total = total + countingUnit * int(str(val) + tempVal)
+                        #计算后 把临时字符串置位空
+                        tempVal = ''
+                else:
+                    #那就是无论如何要收尾了
+                    total = total + countingUnit * int(str(val) + tempVal)
 
-    #如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
-    #如果countingUnit 大于10 说明他是就是 汉字零
-    if total == 0 and countingUnit>10:
-        total = str(countingUnit)
+        #如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
+        #如果countingUnit 大于10 说明他是就是 汉字零
+        if total == 0 and countingUnit>10:
+            total = str(countingUnit)
+        else:
+            total = str(total)
     else:
-        total = str(total)
+        #如果是小数点右边，直接执行。
+        for i in range(len(chineseChars) - 1, -1, -1):
+            val = common_used_ch_numerals.get(chineseChars[i])
+            tempVal =  str(val) + tempVal#直接拼接
+        total = str(tempVal)
     if total.endswith('.0'):
         total = total[:-2]
     return total
@@ -167,7 +175,10 @@ def chineseToDigits(chineseDigitsMixString,percentConvert = True,*args,**kwargs)
                 """
                 convertResult = '0.'+ coreCHToDigits(chineseCharsDotSplitList[1])
             else:
-                convertResult = coreCHToDigits(chineseCharsDotSplitList[0]) + '.' + coreCHToDigits(chineseCharsDotSplitList[1])
+                """
+                小数点右侧要注意，有可能是00开头
+                """
+                convertResult = coreCHToDigits(chineseCharsDotSplitList[0]) + '.' + coreCHToDigits(chineseCharsDotSplitList[1],dotPosition=1)
             
             convertResult = str(float(convertResult)*tempCountNum)
         """
@@ -566,6 +577,7 @@ if __name__=='__main__':
     print(takeNumberFromString('三零万二零千拉阿拉啦啦30万20千嚯嚯或百四嚯嚯嚯四百三十二分之2345啦啦啦啦',percentConvert=False))
     print(takeNumberFromString('百分之5负千分之15'))
     print(takeNumberFromString('啊啦啦啦300十万你好我20万.3%万你好啊300咯咯咯-.34%啦啦啦300万'))
+    print(takeChineseNumberFromString('百分之四百三十二万分之四三千分之五今天天气不错三百四十点零零三四'))
     #将百分比转为小数
     print(takeDigitsNumberFromString('234%lalalal-%nidaye+2.34%',percentConvert=True))
     print(takeChineseNumberFromString('aaaa.3%万'))
