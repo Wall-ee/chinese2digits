@@ -89,7 +89,7 @@ func maxValueInArray(arrayToCalc []int) int {
 }
 
 // CoreCHToDigits 是核心转化函数
-func CoreCHToDigits(chineseCharsToTrans string,dotPosition int) string {
+func CoreCHToDigits(chineseCharsToTrans string, dotPosition int) string {
 	chineseChars := []rune(chineseCharsToTrans)
 	total := ""
 	tempVal := ""                      //#用以记录临时是否建议数字拼接的字符串 例如 三零万 的三零
@@ -99,7 +99,7 @@ func CoreCHToDigits(chineseCharsToTrans string,dotPosition int) string {
 	tempTotal := 0
 	// countingUnit := 1
 	// 表示单位：个十百千...
-	if dotPosition = 0 {
+	if dotPosition == 0 {
 		//如果是小数点左边 正常执行 考虑各种单位等等
 		for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
 			charToGet := string(chineseChars[i])
@@ -167,13 +167,13 @@ func CoreCHToDigits(chineseCharsToTrans string,dotPosition int) string {
 				total = strconv.Itoa(tempTotal)
 			}
 		}
-	}else {
+	} else {
 		//小数点右边，便捷执行，考虑 零零五六这种情况
 		for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
 			charToGet := string(chineseChars[i])
 			val, _ := chineseCharNumberDict[charToGet]
-			tempTotal = tempTotal + val
-		total = tempTotal
+			total = strconv.Itoa(val) + total
+		}
 	}
 	newTotalTemp := []rune(total)
 	newTotal := ""
@@ -347,7 +347,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 		}
 		convertResult := ""
 		if !stringContainDot {
-			convertResult = CoreCHToDigits(tempChineseChars,0)
+			convertResult = CoreCHToDigits(tempChineseChars, 0)
 		} else {
 			convertResult = ""
 			tempBuf := bytes.Buffer{}
@@ -356,7 +356,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 			// #先把小数点右侧单位去掉
 			tempCountString := ""
 			listOfRight := []rune(rightOfDotString)
-			for ii := len(listOfRight) - 1; ii > 0; ii-- {
+			for ii := len(listOfRight) - 1; ii >= 0; ii-- {
 				if isExistItem(string(listOfRight[ii]), []string{"千", "万", "百"}) > -1 {
 					tempCountString = string(listOfRight[ii]) + tempCountString
 				} else {
@@ -367,7 +367,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 
 			tempCountNum := 1.0
 			if tempCountString != "" {
-				tempNum, errTemp := strconv.ParseFloat(CoreCHToDigits(tempCountString,0), 32/64)
+				tempNum, errTemp := strconv.ParseFloat(CoreCHToDigits(tempCountString, 0), 32/64)
 				if errTemp != nil {
 					panic(errTemp)
 				} else {
@@ -380,14 +380,14 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 				// .01234 这种开头  用0 补位
 				// """
 				tempBuf.WriteString("0.")
-				tempRightDigits = CoreCHToDigits(rightOfDotString,1)
+				tempRightDigits = CoreCHToDigits(rightOfDotString, 1)
 				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			} else {
-				tempBuf.WriteString(CoreCHToDigits(leftOfDotString,0))
+				tempBuf.WriteString(CoreCHToDigits(leftOfDotString, 0))
 				tempBuf.WriteString(".")
-				tempRightDigits = CoreCHToDigits(rightOfDotString,1)
+				tempRightDigits = CoreCHToDigits(rightOfDotString, 1)
 				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
@@ -859,7 +859,12 @@ func TakeNumberFromString(chTextString string, opt ...interface{}) interface{} {
 }
 
 // func main() {
-// 	fmt.Println(TakeChineseNumberFromString("负百分之点二八你好啊百分之三五是不是点五零百分之负六十五点二八百分之四十啦啦啦啊四万三千四百二", true, true, true))
+// 	fmt.Println(TakeChineseNumberFromString("三十万", true, true, true))
+// 	fmt.Println("这个函数被调用了")
+// }
+
+// func main() {
+// 	fmt.Println(TakeChineseNumberFromString("三十万", true, true, true))
 // 	fmt.Println("这个函数被调用了")
 // }
 

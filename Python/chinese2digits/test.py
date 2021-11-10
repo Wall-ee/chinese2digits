@@ -29,10 +29,10 @@ class TestDict(unittest.TestCase):
 
     def test_percentage_convert(self):
         print('===========testing percentage convert============')
-        result = c2d.takeNumberFromString('aaaa.3%万')
-        self.assertEqual(result['replacedText'], 'aaaa30')
-        self.assertEqual(result['CHNumberStringList'], ['.3%万'])
-        self.assertEqual(result['digitsStringList'], ['30'])
+        result = c2d.takeNumberFromString('aaaa.3%万啦啦啦啦0.03万')
+        self.assertEqual(result['replacedText'], 'aaaa30啦啦啦啦300')
+        self.assertEqual(result['CHNumberStringList'], ['.3%万','0.03万'])
+        self.assertEqual(result['digitsStringList'], ['30','300'])
 
     def test_rational_number(self):
         print('===========testing rational number convert============')

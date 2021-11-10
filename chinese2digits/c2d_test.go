@@ -36,11 +36,11 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 			replacedText:       "啊啦啦啦30000000你好我20000030你好啊300咯咯咯-0.0034啦啦啦3000000",
 			CHNumberStringList: []string{"300十万", "20万", ".3%万", "300", "-.34%", "300万"},
 			digitsStringList:   []string{"30000000", "200000", "30", "300", "-0.0034", "3000000"}},
-		"3": {input: "aaaa.3%万",
+		"3": {input: "aaaa.3%万啦啦啦啦0.03万",
 			percentConvert:     true,
-			replacedText:       "aaaa30",
-			CHNumberStringList: []string{".3%万"},
-			digitsStringList:   []string{"30"}},
+			replacedText:       "aaaa30啦啦啦啦300",
+			CHNumberStringList: []string{".3%万", "0.03万"},
+			digitsStringList:   []string{"30", "300"}},
 		"4": {input: "十分之一",
 			percentConvert:     true,
 			replacedText:       "0.1",
@@ -59,8 +59,8 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 		"7": {input: "百分之四百三十二万分之四三千分之五今天天气不错三百四十点零零三四",
 			percentConvert:     true,
 			replacedText:       "4.320.00430.005今天天气不错340.0034",
-			CHNumberStringList: []string{"百分之四百三十二", "万分之四三", "千分之五","三百四十点零零三四"},
-			digitsStringList:   []string{"4.32", "0.0043", "0.005","340.0034"}},
+			CHNumberStringList: []string{"百分之四百三十二", "万分之四三", "千分之五", "三百四十点零零三四"},
+			digitsStringList:   []string{"4.32", "0.0043", "0.005", "340.0034"}},
 		"8": {input: "四千三",
 			percentConvert:     true,
 			replacedText:       "4300",
@@ -95,6 +95,7 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) { // 使用t.Run()执行子测试
+			// fmt.Println(tc.input)
 			got := TakeNumberFromString(tc.input, tc.percentConvert, true)
 
 			resultReplacedText := got.(map[string]interface{})["replacedText"]
@@ -112,6 +113,11 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 		})
 	}
 }
+
+// func main() {
+// 	fmt.Println(TakeChineseNumberFromString("三十万", true, true, true))
+// 	fmt.Println("这个函数被调用了")
+// }
 
 // func main() {
 // 	fmt.Println("输入：负百分之点二八你好啊三五四百分之三五是不是点伍零百分之负六十五点二八")
