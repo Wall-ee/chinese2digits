@@ -419,14 +419,15 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 	if len(convertResultList) > 1 {
 		// #是否转换分号及百分比
 		if percentConvert {
-			tempFloat1, err1 := strconv.ParseFloat(convertResultList[1], 32)
+			tempFloat1, err1 := strconv.ParseFloat(convertResultList[1], 32/64)
 			if err1 != nil {
 				panic(err1)
 			} else {
-				tempFloat0, err0 := strconv.ParseFloat(convertResultList[0], 32)
+				tempFloat0, err0 := strconv.ParseFloat(convertResultList[0], 32/64)
 				if err0 != nil {
 					panic(err0)
 				} else {
+					// fmt.Println(tempFloat1 / tempFloat0)
 					finalTotal = strconv.FormatFloat(tempFloat1/tempFloat0, 'f', -1, 32)
 				}
 			}
