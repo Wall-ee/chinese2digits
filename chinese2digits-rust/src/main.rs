@@ -131,7 +131,7 @@ fn core_ch_to_digits(chinese_chars_to_trans:String, dot_position:bool) -> String
 		}
 	} else {
 		//小数点右边，便捷执行，考虑 零零五六这种情况
-		for i in (chinese_chars.len()-1) .. 0 {
+		for i in (0..chinese_chars.chars().count()).rev() {
 			let char_to_get = chinese_chars.chars().nth(i).unwrap().to_string();
 			let val_from_hash_map = chinese_char_number_dict.get(&char_to_get[..]);
 			match val_from_hash_map {
