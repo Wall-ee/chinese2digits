@@ -42,8 +42,8 @@ fn core_ch_to_digits(chinese_chars_to_trans:String, dot_position:bool) -> String
 	let mut temp_val = "".to_string();                      //#用以记录临时是否建议数字拼接的字符串 例如 三零万 的三零
 	let mut counting_unit:i32 = 1;                  //#表示单位：个十百千,用以计算单位相乘 例如八百万 百万是相乘的方法，但是如果万前面有 了一千八百万 这种，千和百不能相乘，要相加...
 	let mut counting_unit_from_string: Vec<i32>= vec![1]; //#原始字符串提取的单位应该是一个list  在计算的时候，新的单位应该是本次取得的数字乘以已经发现的最大单位，例如 4千三百五十万， 等于 4000万+300万+50万
-	let mut new_total :String="".to_string();
-	let mut temp_val_int:i32 = 1;
+	let new_total :String ;
+	let mut temp_val_int:i32;
 	let  chinese_char_number_dict: HashMap<&str, i32> = CHINESE_CHAR_NUMBER_LIST.into_iter().collect();
 
 	let mut temp_total:i32 = 0;
