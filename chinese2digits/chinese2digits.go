@@ -548,57 +548,55 @@ func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) stri
 		}
 
 	}
-    if stringLength > 1 {
-        // #检查繁体单体转换
-        for i := 0; i < stringLength; i++ {
-            // #如果 前后有 pure 汉字数字 则转换单位为简体
-            charToGet = string(chStringList[i])
-            value, exists := SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT[charToGet]
-            // # 如果前后有单纯的数字 则进行单位转换
-            if exists {
-                switch i {
-                case 0:
-                    if isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-                        chStringList[i] = []rune(value)[0]
-                    }
-                case stringLength - 1:
-                    if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-                        chStringList[i] = []rune(value)[0]
-                    }
-                default:
-                    if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 ||
-                        isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-                        chStringList[i] = []rune(value)[0]
-                    }
-                }
-            }
-            // #特殊变换 俩变二
-            charToGet = string(chStringList[i])
-            value, exists = SPECIAL_NUMBER_CHAR_DICT[charToGet]
-            // # 如果前后有单纯的数字 则进行单位转换
-            if exists {
-                switch i {
-                case 0:
-                    if isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-                        chStringList[i] = []rune(value)[0]
-                    }
-                case stringLength - 1:
-                    if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-                        chStringList[i] = []rune(value)[0]
-                    }
-                default:
-                    if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 ||
-                        isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-                        chStringList[i] = []rune(value)[0]
-                    }
-                }
-            }
+	if stringLength > 1 {
+		// #检查繁体单体转换
+		for i := 0; i < stringLength; i++ {
+			// #如果 前后有 pure 汉字数字 则转换单位为简体
+			charToGet = string(chStringList[i])
+			value, exists := SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT[charToGet]
+			// # 如果前后有单纯的数字 则进行单位转换
+			if exists {
+				switch i {
+				case 0:
+					if isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				case stringLength - 1:
+					if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				default:
+					if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 ||
+						isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				}
+			}
+			// #特殊变换 俩变二
+			charToGet = string(chStringList[i])
+			value, exists = SPECIAL_NUMBER_CHAR_DICT[charToGet]
+			// # 如果前后有单纯的数字 则进行单位转换
+			if exists {
+				switch i {
+				case 0:
+					if isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				case stringLength - 1:
+					if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				default:
+					if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 ||
+						isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				}
+			}
 
-        }
+		}
 
-
-    }
-
+	}
 
 	return string(chStringList)
 }
@@ -763,7 +761,8 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 
 	//检查合理性 是否是单纯的单位  等
 	// var CHNumberStringList []string
-	var OriginCHNumberForOutput []string
+	// var OriginCHNumberForOutput []string
+	OriginCHNumberForOutput := []string{}
 	for i := 0; i < len(CHNumberStringListTemp); i++ {
 		// fmt.Println(aa[i])
 		tempText = CHNumberStringListTemp[i]
