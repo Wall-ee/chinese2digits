@@ -33,15 +33,15 @@ digits_char_ch_dict = {'0':'零','1':'一','2':'二','3':'三','4':'四','5':'�
 
 
 #以百分号作为大逻辑区分。 是否以百分号作为新的数字切割逻辑 所以同一套切割逻辑要有  或关系   有百分之结尾 或者  没有百分之结尾
-takingChineseNumberRERules = re.compile('(?:(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))'
-                                        '(?:(?:分之)(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
-                                        '(?:点[一二三四五六七八九幺零]+))){0,1}')
+takingChineseNumberRERules = re.compile(r'(?:(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))'
+                                        r'(?:(?:分之)(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|'
+                                        r'(?:点[一二三四五六七八九幺零]+))){0,1}')
 
-takingChineseDigitsMixRERules = re.compile('(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})'
-                                            '(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|\.\d+(?:[\%\‰\‱]){0,1}){0,1}'
-                                            '(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))))'
-                                            '|(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|\.\d+(?:[\%\‰\‱]){0,1})'
-                                            '(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))){0,1}))')
+takingChineseDigitsMixRERules = re.compile(r'(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})'
+                                            r'(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|\.\d+(?:[\%\‰\‱]){0,1}){0,1}'
+                                            r'(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))))'
+                                            r'|(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|\.\d+(?:[\%\‰\‱]){0,1})'
+                                            r'(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))){0,1}))')
 
 PURE_DIGITS_RE = re.compile('[0-9]')
 
@@ -52,7 +52,7 @@ DIGITS_CHAR_LIST = ['0','1', '2', '3', '4', '5', '6', '7', '8', '9']
 DIGITS_SIGN_LIST = ['-','+']
 DIGITS_CONNECTING_SIGN_LIST = ['.']
 DIGITS_PER_COUNTING_STRING_LIST = ['%','‰','‱']
-takingDigitsRERule = re.compile('(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})')
+takingDigitsRERule = re.compile(r'(?:(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|(?:\+|\-){0,1}\.\d+(?:[\%\‰\‱]){0,1})')
 
 def coreCHToDigits(chineseChars,dotPosition=0):
     total = 0
@@ -245,39 +245,40 @@ def traditionalTextConvertFunc(chString,traditionalConvertSwitch=True):
     stringLength = len(list(chStringList))
 
     if traditionalConvertSwitch == True:
+
         for i in range(stringLength):
             #繁体中文数字转简体中文数字
             if TRADITIONAl_CONVERT_DICT.get(chStringList[i],'') != '':
                 chStringList[i] = TRADITIONAl_CONVERT_DICT.get(chStringList[i],'')
-
-    #检查繁体单体转换
-    for i in range(stringLength):
-        #如果 前后有 pure 汉字数字 则转换单位为简体
-        if SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i],'') != '':
-            # 如果前后有单纯的数字 则进行单位转换
-            if i == 0:
-                if chStringList[i+1] in CHINESE_PURE_NUMBER_LIST:
-                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
-            elif i == stringLength-1:
-                if chStringList[i-1] in CHINESE_PURE_NUMBER_LIST:
-                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
-            else:
-                if chStringList[i-1] in CHINESE_PURE_NUMBER_LIST or \
-                        chStringList[i+1] in CHINESE_PURE_NUMBER_LIST :
-                    chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
-        #特殊变换 俩变二
-        if SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '') != '':
-            # 如果前后有单位 则进行转换
-            if i == 0:
-                if chStringList[i+1] in CHINESE_PURE_COUNTING_UNIT_LIST:
-                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
-            elif i == stringLength-1:
-                if chStringList[i-1] in CHINESE_PURE_COUNTING_UNIT_LIST:
-                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
-            else:
-                if chStringList[i-1] in CHINESE_PURE_COUNTING_UNIT_LIST or \
-                        chStringList[i+1] in CHINESE_PURE_COUNTING_UNIT_LIST :
-                    chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
+    if stringLength > 1:
+        #检查繁体单体转换
+        for i in range(stringLength):
+            #如果 前后有 pure 汉字数字 则转换单位为简体
+            if SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i],'') != '':
+                # 如果前后有单纯的数字 则进行单位转换
+                if i == 0:
+                    if chStringList[i+1] in CHINESE_PURE_NUMBER_LIST:
+                        chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
+                elif i == stringLength-1:
+                    if chStringList[i-1] in CHINESE_PURE_NUMBER_LIST:
+                        chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
+                else:
+                    if chStringList[i-1] in CHINESE_PURE_NUMBER_LIST or \
+                            chStringList[i+1] in CHINESE_PURE_NUMBER_LIST :
+                        chStringList[i] = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.get(chStringList[i], '')
+            #特殊变换 俩变二
+            if SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '') != '':
+                # 如果前后有单位 则进行转换
+                if i == 0:
+                    if chStringList[i+1] in CHINESE_PURE_COUNTING_UNIT_LIST:
+                        chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
+                elif i == stringLength-1:
+                    if chStringList[i-1] in CHINESE_PURE_COUNTING_UNIT_LIST:
+                        chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
+                else:
+                    if chStringList[i-1] in CHINESE_PURE_COUNTING_UNIT_LIST or \
+                            chStringList[i+1] in CHINESE_PURE_COUNTING_UNIT_LIST :
+                        chStringList[i] = SPECIAL_NUMBER_CHAR_DICT.get(chStringList[i], '')
     return ''.join(chStringList)
 
 """
@@ -571,6 +572,8 @@ def takeDigitsNumberFromString(textToExtract,percentConvert = False):
     return finalResult
 
 if __name__=='__main__':
+
+    print(takeNumberFromString('拾'))
 
     print(takeNumberFromString('12.55万'))
     #混合提取
