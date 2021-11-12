@@ -148,7 +148,7 @@ fn core_ch_to_digits(chinese_chars_to_trans:String, dot_position:bool) -> String
 	}
 
 	if total.ends_with(".0"){
-		new_total = (&total[0..(total.len()-2)]).to_string();
+		new_total = (&total[0..(total.chars().count()-2)]).to_string();
 	}else{
 		new_total = total;
 	}
