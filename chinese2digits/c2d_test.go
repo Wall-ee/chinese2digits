@@ -97,6 +97,17 @@ func TestSplit(t *testing.T) { // 测试函数名必须以Test开头，必须接
 			replacedText:       "拾",
 			CHNumberStringList: []string{},
 			digitsStringList:   []string{}},
+		"15": {input: "零零零三四二啦啦啦啦12.550万啦啦啦啦啦零点零零三四二万",
+			percentConvert:     true,
+			replacedText:       "000342啦啦啦啦125500啦啦啦啦啦34.2",
+			CHNumberStringList: []string{"零零零三四二", "12.550万", "零点零零三四二万"},
+			digitsStringList:   []string{"000342", "125500", "34.2"}},
+
+		"16": {input: "10000000000000000000000000000000000000000000连",
+			percentConvert:     true,
+			replacedText:       "10000000000000000000000000000000000000000000连",
+			CHNumberStringList: []string{"10000000000000000000000000000000000000000000"},
+			digitsStringList:   []string{"10000000000000000000000000000000000000000000"}},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) { // 使用t.Run()执行子测试
