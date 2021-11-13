@@ -1,0 +1,5 @@
+{
+    "terminal.integrated.shellArgs.windows":[],
+    "python.terminal.activateEnvironment": false
+    
+}
