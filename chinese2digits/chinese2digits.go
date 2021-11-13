@@ -157,24 +157,25 @@ func CoreCHToDigits(chineseCharsToTrans string) string {
 
 		}
 
-		//如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
-		if tempTotal == 0 {
-			if countingUnit > 10 {
-				// 转化为字符串
-				total = strconv.Itoa(countingUnit)
-			} else {
-				//counting Unit 为1  且tempval 不为空 说明是没有单位的纯数字拼接
-				if tempVal != "" {
-					total = tempVal
-				} else {
-					total = strconv.Itoa(tempTotal)
-				}
-			}
-		} else {
-			// 转化为字符串
-			total = strconv.Itoa(tempTotal)
+	}
 
+	//如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
+	if tempTotal == 0 {
+		if countingUnit > 10 {
+			// 转化为字符串
+			total = strconv.Itoa(countingUnit)
+		} else {
+			//counting Unit 为1  且tempval 不为空 说明是没有单位的纯数字拼接
+			if tempVal != "" {
+				total = tempVal
+			} else {
+				total = strconv.Itoa(tempTotal)
+			}
 		}
+	} else {
+		// 转化为字符串
+		total = strconv.Itoa(tempTotal)
+
 	}
 
 	return total
