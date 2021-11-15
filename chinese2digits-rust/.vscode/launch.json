@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug Auto",
+            "type": "cppvsdbg",  // 使用Native Debug插件提供的gdb类型
+            "request": "launch",
+            // "target": "./target/debug/${workspaceFolderBasename}.exe", // 注意这里使用了第五部分讲到的配置变量
+            // https://zhuanlan.zhihu.com/p/92175757
+            "program":"${workspaceRoot}/target/debug/${workspaceFolderBasename}.exe",
+            "preLaunchTask": "Build",
+            "cwd": "${workspaceRoot}",
+            // "valuesFormatting": "parseText"
+        },
+        {
             "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",

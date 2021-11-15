@@ -17,6 +17,20 @@ class TestDict(unittest.TestCase):
         self.assertEqual(result['CHNumberStringList'], ['百分之5', '负千分之15'])
         self.assertEqual(result['digitsStringList'], ['0.05', '-0.015'])
 
+        result = c2d.takeNumberFromString('拾')
+        self.assertEqual(result['replacedText'], '拾')
+        self.assertEqual(result['CHNumberStringList'], [])
+        self.assertEqual(result['digitsStringList'], [])
+
+
+        result = c2d.takeNumberFromString('零零零三四二啦啦啦啦12.550万啦啦啦啦啦零点零零三四二万')
+        self.assertEqual(result['replacedText'], '000342啦啦啦啦125500啦啦啦啦啦34.2')
+        self.assertEqual(result['CHNumberStringList'], ['零零零三四二','12.550万','零点零零三四二万'])
+        self.assertEqual(result['digitsStringList'], ['000342', '125500','34.2'])
+
+
+
+
         result = c2d.takeNumberFromString('2.55万nonono3.1千万')
         self.assertEqual(result['replacedText'], '25500nonono31000000')
         self.assertEqual(result['CHNumberStringList'], ['2.55万','3.1千万'])
