@@ -540,7 +540,8 @@ static takingChineseDigitsMixRERulesString:&str = r"(?:(?:分之){0,1}(?:\+|\-){
 
 
 
-static CHINESE_SIGN_DICT_STATIC = map[string]string{"负": "-", "正": "+", "-": "-", "+": "+"}
+static CHINESE_SIGN_DICT_STATIC: [(&str, &str); 4] = [("负": "-"), ("正": "+"), ("-": "-"), ("+": "+")]
+
 // ChineseToDigits 是可以识别包含百分号，正负号的函数，并控制是否将百分之10转化为0.1
 fn chineseToDigits(chineseCharsToTrans:String, percentConvert:bool) -> String{
 	// """
@@ -550,7 +551,7 @@ fn chineseToDigits(chineseCharsToTrans:String, percentConvert:bool) -> String{
 	let mut convertResultList:Vec<String> = vec![];
 	let mut chineseCharsListByDiv:Vec<String> = vec![];
 
-
+	let  chineseSignDict: HashMap<&str, &str> = CHINESE_SIGN_DICT_STATIC.into_iter().collect();
 
 	let dotRightPartReplaceRule:Regex = Regex::new("0+$").unwrap();
 
@@ -575,22 +576,27 @@ fn chineseToDigits(chineseCharsToTrans:String, percentConvert:bool) -> String{
 		let mut sign = "".to_string();
 		for i in 0..chineseChars.len(){
 			let charToGet = chineseChars[i].to_string().as_str();
-			value, exists := chineseSignDict[charToGet]
-			if exists {
-				sign = value
-				// chineseCharsToTrans = strings.Replace(chineseCharsToTrans, charToGet, "", -1)
-				tempChineseChars = strings.Replace(tempChineseChars, charToGet, "", -1)
-			}
+			let value = chineseSignDict.get(charToGet.as_str());
+			match value {
+				Some(value) =>{
+					sign = &value;
+					// chineseCharsToTrans = strings.Replace(chineseCharsToTrans, charToGet, "", -1)
+					tempChineseChars.replace(charToGet,"");
 
+				}
+				None =>{
+
+				}
+			}
 		}
 		// chineseChars = []rune(chineseCharsToTrans)
 
 		// """
 		// 小数点切割，看看是不是有小数点
 		// """
-		stringContainDot := false
-		leftOfDotString := ""
-		rightOfDotString := ""
+		let stringContainDot = false;
+		let leftOfDotString = "".to_string();
+		let rightOfDotString = "".to_string();
 		for key := range chineseConnectingSignDict {
 			if strings.Contains(tempChineseChars, key) {
 				chineseCharsDotSplitList := strings.Split(tempChineseChars, key)
