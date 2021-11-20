@@ -1,71 +1,74 @@
 // #[warn(unused_assignments)]
 // #[macro_use] extern crate lazy_static;
-extern crate regex;
+// extern crate regex;
+extern crate pcre2;
+// use regex::Regex;
+use pcre2::bytes::Regex;
 use std::collections::HashMap;
-use regex::Regex;
-
+use std::str;
 
 // 中文转阿拉伯数字
 static CHINESE_CHAR_NUMBER_LIST: [(&str, i32); 29] = [
-	("幺" , 1), 
-	("零" , 0),
-	("一" , 1), 
-	("二" , 2), 
-	("两" , 2), 
-	("三" , 3), 
-	("四" , 4), 
-	("五" , 5),
-	("六" , 6), 
-	("七" , 7), 
-	("八" , 8), 
-	("九" , 9), 
-	("十" , 10), 
-	("百" , 100),
-	("千" , 1000), 
-	("万" , 10000), 
-	("亿" , 100000000), 
-	("壹" , 1), 
-	("贰" , 2), 
-	("叁" , 3), 
-	("肆" , 4), 
-	("伍" , 5), 
-	("陆" , 6), 
-	("柒" , 7), 
-	("捌" , 8), 
-	("玖" , 9), 
-	("拾" , 10),
-	("佰" , 100), 
-	("仟" , 1000)
-
+	("幺", 1),
+	("零", 0),
+	("一", 1),
+	("二", 2),
+	("两", 2),
+	("三", 3),
+	("四", 4),
+	("五", 5),
+	("六", 6),
+	("七", 7),
+	("八", 8),
+	("九", 9),
+	("十", 10),
+	("百", 100),
+	("千", 1000),
+	("万", 10000),
+	("亿", 100000000),
+	("壹", 1),
+	("贰", 2),
+	("叁", 3),
+	("肆", 4),
+	("伍", 5),
+	("陆", 6),
+	("柒", 7),
+	("捌", 8),
+	("玖", 9),
+	("拾", 10),
+	("佰", 100),
+	("仟", 1000),
 ];
 
-static CHINESE_PURE_COUNTING_UNIT_LIST:[&str;5] = ["十", "百", "千", "万", "亿"];
+static CHINESE_PURE_COUNTING_UNIT_LIST: [&str; 5] = ["十", "百", "千", "万", "亿"];
 
-static CHINESE_PURE_NUMBER_LIST :[&str;13]= ["幺", "一", "二", "两", "三", "四", "五", "六", "七", "八", "九", "十", "零"];
+static CHINESE_PURE_NUMBER_LIST: [&str; 13] = [
+	"幺", "一", "二", "两", "三", "四", "五", "六", "七", "八", "九", "十", "零",
+];
 
 // CoreCHToDigits 是核心转化函数
-fn core_ch_to_digits(chinese_chars_to_trans:String) -> String{
-
+fn core_ch_to_digits(chinese_chars_to_trans: String) -> String {
 	let chinese_chars = chinese_chars_to_trans;
-	let total:String;
-	let mut temp_val = "".to_string();                      //#用以记录临时是否建议数字拼接的字符串 例如 三零万 的三零
-	let mut counting_unit:i32 = 1;                  //#表示单位：个十百千,用以计算单位相乘 例如八百万 百万是相乘的方法，但是如果万前面有 了一千八百万 这种，千和百不能相乘，要相加...
-	let mut counting_unit_from_string: Vec<i32>= vec![1]; //#原始字符串提取的单位应该是一个list  在计算的时候，新的单位应该是本次取得的数字乘以已经发现的最大单位，例如 4千三百五十万， 等于 4000万+300万+50万
-	let mut temp_val_int:i32;
-	let  chinese_char_number_dict: HashMap<&str, i32> = CHINESE_CHAR_NUMBER_LIST.into_iter().collect();
+	let total: String;
+	let mut temp_val = "".to_string(); //#用以记录临时是否建议数字拼接的字符串 例如 三零万 的三零
+	let mut counting_unit: i32 = 1; //#表示单位：个十百千,用以计算单位相乘 例如八百万 百万是相乘的方法，但是如果万前面有 了一千八百万 这种，千和百不能相乘，要相加...
+	let mut counting_unit_from_string: Vec<i32> = vec![1]; //#原始字符串提取的单位应该是一个list  在计算的时候，新的单位应该是本次取得的数字乘以已经发现的最大单位，例如 4千三百五十万， 等于 4000万+300万+50万
+	let mut temp_val_int: i32;
+	let chinese_char_number_dict: HashMap<&str, i32> =
+		CHINESE_CHAR_NUMBER_LIST.into_iter().collect();
 
-	let mut temp_total:i32 = 0;
+	let mut temp_total: i32 = 0;
 	// // counting_unit := 1
 	// 表示单位：个十百千...
 	for i in (0..chinese_chars.chars().count()).rev() {
 		// println!("{}",i);
 		let char_to_get = chinese_chars.chars().nth(i).unwrap().to_string();
 		let val_from_hash_map = chinese_char_number_dict.get(char_to_get.as_str());
-		
-		match val_from_hash_map{
+
+		match val_from_hash_map {
 			Some(val_from_hash_map) => {
 				let val = *val_from_hash_map;
-				if val >= 10 &&  i == 0_usize{
+				if val >= 10 && i == 0_usize {
 					// 应对 十三 十四 十*之类
 					if val > counting_unit {
 						counting_unit = val;
@@ -76,9 +79,8 @@ fn core_ch_to_digits(chinese_chars_to_trans:String) -> String{
 						let max_value_option = counting_unit_from_string.iter().max();
 						let max_value = max_value_option.unwrap();
 						counting_unit = max_value * val;
-
 					}
-				}else if val >= 10 {
+				} else if val >= 10 {
 					if val > counting_unit {
 						counting_unit = val;
 						counting_unit_from_string.push(val);
@@ -89,12 +91,18 @@ fn core_ch_to_digits(chinese_chars_to_trans:String) -> String{
 						let max_value = max_value_option.unwrap();
 						counting_unit = max_value * val;
 					}
-
-				}else{
+				} else {
 					if i > 0 {
 						// #如果下一个不是单位 则本次也是拼接
-						let pre_val_temp_option = chinese_char_number_dict.get(chinese_chars.chars().nth(i-1).unwrap().to_string().as_str());
-						match pre_val_temp_option{
+						let pre_val_temp_option = chinese_char_number_dict.get(
+							chinese_chars
+								.chars()
+								.nth(i - 1)
+								.unwrap()
+								.to_string()
+								.as_str(),
+						);
+						match pre_val_temp_option {
 							Some(pre_val_temp_option) => {
 								let pre_val_temp = *pre_val_temp_option;
 								if pre_val_temp < 10 {
@@ -104,31 +112,28 @@ fn core_ch_to_digits(chinese_chars_to_trans:String) -> String{
 									// #说明已经有大于10的单位插入 要数学计算了
 									// #先拼接再计算
 									// #如果取值不大于10 说明是0-9 则继续取值 直到取到最近一个大于10 的单位   应对这种30万20千 这样子
-									temp_val_int = (val.to_string() + &temp_val).parse::<i32>().unwrap();
+									temp_val_int =
+										(val.to_string() + &temp_val).parse::<i32>().unwrap();
 									temp_total = temp_total + counting_unit * temp_val_int;
 									// #计算后 把临时字符串置位空
 									temp_val = "".to_string();
 								}
 							}
-							None => {
-
-							}
+							None => {}
 						}
-
-
 					} else {
 						// #那就是无论如何要收尾了
 						//如果counting unit 等于1  说明所有字符串都是直接拼接的，不用计算，不然会丢失前半部分的零
 						if counting_unit == 1 {
 							temp_val = val.to_string() + &temp_val;
-						}else{
+						} else {
 							temp_val_int = (val.to_string() + &temp_val).parse::<i32>().unwrap();
 							temp_total = temp_total + counting_unit * temp_val_int;
 						}
 					}
-				}			
+				}
 			}
-			None => println!( "No string in number" ),
+			None => println!("No string in number"),
 		}
 	}
 	//如果 total 为0  但是 counting_unit 不为0  说明结果是 十万这种  最终直接取结果 十万
@@ -136,36 +141,37 @@ fn core_ch_to_digits(chinese_chars_to_trans:String) -> String{
 		if counting_unit > 10 {
 			// 转化为字符串
 			total = counting_unit.to_string();
-		}else{
+		} else {
 			//counting Unit 为1  且tempval 不为空 说明是没有单位的纯数字拼接
-			if temp_val != ""{
+			if temp_val != "" {
 				total = temp_val;
-			}else{
+			} else {
 				// 转化为字符串
 				total = temp_total.to_string();
 			}
 		}
-	}else{
+	} else {
 		// 转化为字符串
 		total = temp_total.to_string();
 	}
 
-	return total
+	return total;
 }
 
-
 //汉字切分是否正确  分之 切分
-fn check_number_seg(chinese_number_list:Vec<String>, origin_text:String) -> Vec<String> {
-	let mut new_chinese_number_list :Vec<String> = [].to_vec();
+fn check_number_seg(chinese_number_list: &Vec<String>, origin_text: &String) -> Vec<String> {
+	let mut new_chinese_number_list: Vec<String> = [].to_vec();
 	// #用来控制是否前一个已经合并过  防止多重合并
-	let mut temp_pre_text :String = "".to_string();
-	let mut temp_mixed_string:String;
+	let mut temp_pre_text: String = "".to_string();
+	let mut temp_mixed_string: String;
 	let seg_len = chinese_number_list.len();
 	if seg_len > 0 {
 		// #加入唯一的一个 或者第一个
 		if chinese_number_list[0].starts_with("分之") {
 			// #如果以分之开头 记录本次 防止后面要用 是否出现连续的 分之
-			new_chinese_number_list.push((&chinese_number_list[0][2..(chinese_number_list[0].chars().count())]).to_string());
+			new_chinese_number_list.push(
+				(&chinese_number_list[0][2..(chinese_number_list[0].chars().count())]).to_string(),
+			);
 		} else {
 			new_chinese_number_list.push(chinese_number_list.get(0).unwrap().to_string())
 		}
@@ -175,32 +181,49 @@ fn check_number_seg(chinese_number_list:Vec<String>, origin_text:String) -> Vec<
 				// #判断本字符是不是以  分之  开头
 				if (chinese_number_list[i]).starts_with("分之") {
 					// #如果是以 分之 开头 那么检查他和他见面的汉子数字是不是连续的 即 是否在原始字符串出现
-					temp_mixed_string = chinese_number_list.get(i-1).unwrap().to_string() + &chinese_number_list[i];
-				
-					if origin_text.contains(&temp_mixed_string.to_string()){
+					temp_mixed_string = chinese_number_list.get(i - 1).unwrap().to_string()
+						+ &chinese_number_list[i];
+
+					if origin_text.contains(&temp_mixed_string.to_string()) {
 						// #如果连续的上一个字段是以分之开头的  本字段又以分之开头
 						if temp_pre_text != "" {
 							// #检查上一个字段的末尾是不是 以 百 十 万 的单位结尾
-							if CHINESE_PURE_COUNTING_UNIT_LIST.iter().any(|&x| x == (&temp_pre_text.chars().last().unwrap().to_string())){
+							if CHINESE_PURE_COUNTING_UNIT_LIST
+								.iter()
+								.any(|&x| x == (&temp_pre_text.chars().last().unwrap().to_string()))
+							{
 								//上一个字段最后一个数据
-								let temp_last_chinese_number = new_chinese_number_list.last().unwrap().to_string();
+								let temp_last_chinese_number =
+									new_chinese_number_list.last().unwrap().to_string();
 								// #先把上一个记录进去的最后一位去掉
-								let temp_new_chinese_number_list_len = new_chinese_number_list.len();
-								new_chinese_number_list[temp_new_chinese_number_list_len-1] = (&temp_last_chinese_number[0..(temp_last_chinese_number.chars().count()-1)]).to_string();
+								let temp_new_chinese_number_list_len =
+									new_chinese_number_list.len();
+								new_chinese_number_list[temp_new_chinese_number_list_len - 1] =
+									(&temp_last_chinese_number
+										[0..(temp_last_chinese_number.chars().count() - 1)])
+										.to_string();
 								// #如果结果是确定的，那么本次的字段应当加上上一个字段的最后一个字
-								new_chinese_number_list.push(temp_pre_text.chars().nth(temp_pre_text.chars().count()-1).unwrap().to_string() + &chinese_number_list[i]);
-								
+								new_chinese_number_list.push(
+									temp_pre_text
+										.chars()
+										.nth(temp_pre_text.chars().count() - 1)
+										.unwrap()
+										.to_string() + &chinese_number_list[i],
+								);
 							} else {
 								// #如果上一个字段不是以单位结尾  同时他又是以分之开头，那么 本次把分之去掉
-								new_chinese_number_list.push((&chinese_number_list[i][2..]).to_string())
+								new_chinese_number_list
+									.push((&chinese_number_list[i][2..]).to_string())
 							}
 						} else {
 							// #上一个字段不以分之开头，那么把两个字段合并记录
 							if new_chinese_number_list.len() > 0 {
 								//把最后一位赋值
 								// newChineseNumberList[len(newChineseNumberList)-1] = tempMixedString
-								let temp_new_chinese_number_list_len = new_chinese_number_list.len();
-								new_chinese_number_list[temp_new_chinese_number_list_len-1] = temp_mixed_string;
+								let temp_new_chinese_number_list_len =
+									new_chinese_number_list.len();
+								new_chinese_number_list[temp_new_chinese_number_list_len - 1] =
+									temp_mixed_string;
 							} else {
 								new_chinese_number_list.push(temp_mixed_string);
 							}
@@ -221,311 +244,358 @@ fn check_number_seg(chinese_number_list:Vec<String>, origin_text:String) -> Vec<
 			}
 		}
 	}
-	return new_chinese_number_list
+	return new_chinese_number_list;
 }
 
-
-fn check_chinese_number_reasonable(ch_number:String) ->bool {
+fn check_chinese_number_reasonable(ch_number: &String) -> bool {
 	if ch_number.chars().count() > 0 {
 		// #由于在上个检查点 已经把阿拉伯数字转为中文 因此不用检查阿拉伯数字部分
 		// """
 		// 如果汉字长度大于0 则判断是不是 万  千  单字这种
 		// """
-		for i in CHINESE_PURE_NUMBER_LIST{
+		for i in CHINESE_PURE_NUMBER_LIST {
 			if ch_number.contains(&i.to_string()) {
-				return true
+				return true;
 			}
 		}
 	}
-	return false
+	return false;
 }
-
 
 // """
 // 阿拉伯数字转中文
 // """
-static DIGITS_CHAR_CHINESE_DICT_KEY:[&str;14] = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "%", "‰", "‱", "."];
-static DIGITS_CHAR_CHINESE_DICT: [(&str, &str); 14] = [("0", "零"), ("1", "一"), ("2", "二"), ("3", "三"),( "4", "四"),( "5", "五"), ("6", "六"), ("7", "七"), ("8", "八"), ("9", "九"), ("%", "百分之"), ("‰", "千分之"), ("‱", "万分之"), (".", "点")];
+static DIGITS_CHAR_CHINESE_DICT_KEY: [&str; 14] = [
+	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "%", "‰", "‱", ".",
+];
+static DIGITS_CHAR_CHINESE_DICT: [(&str, &str); 14] = [
+	("0", "零"),
+	("1", "一"),
+	("2", "二"),
+	("3", "三"),
+	("4", "四"),
+	("5", "五"),
+	("6", "六"),
+	("7", "七"),
+	("8", "八"),
+	("9", "九"),
+	("%", "百分之"),
+	("‰", "千分之"),
+	("‱", "万分之"),
+	(".", "点"),
+];
 
-static CHINESE_PER_COUNTING_STRING_LIST:[&str;3] = ["百分之", "千分之", "万分之"];
+static CHINESE_PER_COUNTING_STRING_LIST: [&str; 3] = ["百分之", "千分之", "万分之"];
 
-static TRADITIONAl_CONVERT_DICT: [(&str, &str); 9] = [("壹", "一"), ("贰", "二"), ("叁", "三"), ("肆", "四"), ("伍", "五"), ("陆", "六"), ("柒", "七"),("捌", "八"), ("玖", "九")];
-static SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT :[(&str, &str);5]= [("拾", "十"), ("佰", "百"), ("仟", "千"), ("萬", "万"), ("億", "亿")];
+static TRADITIONAL_CONVERT_DICT_STATIC: [(&str, &str); 9] = [
+	("壹", "一"),
+	("贰", "二"),
+	("叁", "三"),
+	("肆", "四"),
+	("伍", "五"),
+	("陆", "六"),
+	("柒", "七"),
+	("捌", "八"),
+	("玖", "九"),
+];
+static SPECIAL_TRADITIONAL_COUNTING_UNIT_CHAR_DICT_STATIC: [(&str, &str); 5] = [
+	("拾", "十"),
+	("佰", "百"),
+	("仟", "千"),
+	("萬", "万"),
+	("億", "亿"),
+];
 static SPECIAL_NUMBER_CHAR_DICT: [(&str, &str); 2] = [("两", "二"), ("俩", "二")];
 // static CHINESE_PURE_NUMBER_LIST: [&str; 13] = ["幺", "一", "二", "两", "三", "四", "五", "六", "七", "八", "九", "十", "零"];
 static CHINESE_SIGN_LIST: [&str; 4] = ["正", "负", "+", "-"];
 
-
-
 //阿拉伯数字转中文
-fn digits_to_ch_chars(mixedStringList:Vec<String>) -> Vec<String> {
-
-	let mut resultList :Vec<String>= vec![];
-	let  digitsCharChineseDict: HashMap<&str, &str> = DIGITS_CHAR_CHINESE_DICT.into_iter().collect();
+fn digits_to_ch_chars(mixed_string_list: &Vec<String>) -> Vec<String> {
+	let mut result_list: Vec<String> = vec![];
+	let digits_char_chinese_dict: HashMap<&str, &str> = DIGITS_CHAR_CHINESE_DICT.into_iter().collect();
 	// for i := 0; i < len(mixedStringList); i++ {
-	for i in mixedStringList.iter() {
-		let mut mixedString = i.to_string();
-		if mixedString.starts_with(".") {
-			mixedString = "0".to_string() + &mixedString;
+	for i in mixed_string_list.iter() {
+		let mut mixed_string = i.to_string();
+		if mixed_string.starts_with(".") {
+			mixed_string = "0".to_string() + &mixed_string;
 		}
 		for key in DIGITS_CHAR_CHINESE_DICT_KEY.iter() {
-			if mixedString.contains(&key.to_string()) {
-				mixedString = mixedString.replace(key, digitsCharChineseDict.get(key).unwrap().to_string().as_str());
+			if mixed_string.contains(&key.to_string()) {
+				mixed_string = mixed_string.replace(
+					key,
+					digits_char_chinese_dict.get(key).unwrap().to_string().as_str(),
+				);
 				// #应当是只要有百分号 就挪到前面 阿拉伯数字没有四百分之的说法
 				// #防止这种 3%万 这种问题
-				for kk in CHINESE_PER_COUNTING_STRING_LIST.iter(){
-					if mixedString.contains(&kk.to_string()){
-						mixedString = kk.to_string() + &mixedString.replace(kk,"");
+				for kk in CHINESE_PER_COUNTING_STRING_LIST.iter() {
+					if mixed_string.contains(&kk.to_string()) {
+						mixed_string = kk.to_string() + &mixed_string.replace(kk, "");
 					}
-
 				}
-
 			}
 		}
-		resultList.push(mixedString);
+		result_list.push(mixed_string);
 	}
 
-	return resultList
+	return result_list;
 }
 
 // """
 // 繁体简体转换 及  单位  特殊字符转换 两千变二千
 // """
-fn traditionalTextConvertFunc(chString:String, simplifConvertSwitch:bool)->String {
+fn traditional_text_convert_func(ch_string: &String, simplif_convert_switch: bool) -> String {
 	// chStringList := []rune(chString)
-	let mut chStringList:Vec<char> = chString.chars().collect();
+	let mut ch_string_list: Vec<char> = ch_string.chars().collect();
 
-	let stringLength = chString.chars().count();
-	let mut charToGet:String;
-	let traditionalConvertDict: HashMap<&str, &str> = DIGITS_CHAR_CHINESE_DICT.into_iter().collect();
-	let specialTraditionalCountingUnitCharDict :HashMap<&str,&str> = SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT.into_iter().collect();
-	let specialNumberCharDict:HashMap<&str,&str> = SPECIAL_NUMBER_CHAR_DICT.into_iter().collect();
-	
-	if simplifConvertSwitch {
-		for i in 0..chStringList.len(){
+	let string_length = ch_string.chars().count();
+	let mut char_to_get: String;
+	let traditional_convert_dict: HashMap<&str, &str> =
+		TRADITIONAL_CONVERT_DICT_STATIC.into_iter().collect();
+	let special_traditional_counting_unit_char_dict: HashMap<&str, &str> =
+		SPECIAL_TRADITIONAL_COUNTING_UNIT_CHAR_DICT_STATIC
+			.into_iter()
+			.collect();
+	let special_number_char_dict: HashMap<&str, &str> = SPECIAL_NUMBER_CHAR_DICT.into_iter().collect();
+	if simplif_convert_switch {
+		for i in 0..ch_string_list.len() {
 			// #繁体中文数字转简体中文数字
 			// charToGet = string(chStringList[i])
-			charToGet = chStringList[i].to_string();
-			let value= traditionalConvertDict.get(charToGet.as_str());
-			match value{
-				Some(value) =>{
-					chStringList[i] = (*value).chars().nth(0).unwrap();
+			char_to_get = ch_string_list[i].to_string();
+			let value = traditional_convert_dict.get(char_to_get.as_str());
+			match value {
+				Some(value) => {
+					ch_string_list[i] = (*value).chars().nth(0).unwrap();
 				}
-				None => {
-				}
+				None => {}
 			}
 		}
-
 	}
-	if stringLength > 1 {
+	if string_length > 1 {
 		// #检查繁体单体转换
-		for i in 0..stringLength {
+		for i in 0..string_length {
 			// #如果 前后有 pure 汉字数字 则转换单位为简体
-			charToGet = chStringList[i].to_string();
+			char_to_get = ch_string_list[i].to_string();
 			// value, exists := SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT[charToGet]
-			let value = specialTraditionalCountingUnitCharDict.get(charToGet.as_str());
-			// # 如果前后有单纯的数字 则进行单位转换
-			match value {
-				Some(value) =>{
-					if i == 0{
-						if CHINESE_PURE_NUMBER_LIST.iter().any(|&x| x==chStringList[i+1].to_string()){
-							chStringList[i] = (*value).chars().nth(0).unwrap();
-						}
-
-					}else if i == (stringLength - 1){
-						if CHINESE_PURE_NUMBER_LIST.iter().any(|&x| x==chStringList[i-1].to_string()){
-							chStringList[i] = (*value).chars().nth(0).unwrap();
-						}
-
-					}else{
-						if (CHINESE_PURE_NUMBER_LIST.iter().any(|&x| x==chStringList[i-1].to_string())) ||
-						(CHINESE_PURE_NUMBER_LIST.iter().any(|&x| x==chStringList[i+1].to_string())) {
-							chStringList[i] = (*value).chars().nth(0).unwrap();
-						}
-
-					}
-
-				}
-				None =>{
-
-				}
-
-			}
-			// #特殊变换 俩变二
-			charToGet = chStringList[i].to_string();
-			let value = specialNumberCharDict.get(charToGet.as_str());
+			let value = special_traditional_counting_unit_char_dict.get(char_to_get.as_str());
 			// # 如果前后有单纯的数字 则进行单位转换
 			match value {
 				Some(value) => {
 					if i == 0 {
-						
-						if CHINESE_PURE_COUNTING_UNIT_LIST.iter().any(|&x| x==chStringList[i+1].to_string()) {
-							chStringList[i] = (*value).chars().nth(0).unwrap();
+						if CHINESE_PURE_NUMBER_LIST
+							.iter()
+							.any(|&x| x == ch_string_list[i + 1].to_string())
+						{
+							ch_string_list[i] = (*value).chars().nth(0).unwrap();
 						}
-					}else if i == (stringLength - 1){
-						if CHINESE_PURE_COUNTING_UNIT_LIST.iter().any(|&x| x==chStringList[i-1].to_string()) {
-							chStringList[i] = (*value).chars().nth(0).unwrap();
+					} else if i == (string_length - 1) {
+						if CHINESE_PURE_NUMBER_LIST
+							.iter()
+							.any(|&x| x == ch_string_list[i - 1].to_string())
+						{
+							ch_string_list[i] = (*value).chars().nth(0).unwrap();
 						}
-					}else{
-						if (CHINESE_PURE_COUNTING_UNIT_LIST.iter().any(|&x| x==chStringList[i-1].to_string())) ||
-						(CHINESE_PURE_COUNTING_UNIT_LIST.iter().any(|&x| x==chStringList[i+1].to_string())) {
-							chStringList[i] = (*value).chars().nth(0).unwrap();
+					} else {
+						if (CHINESE_PURE_NUMBER_LIST
+							.iter()
+							.any(|&x| x == ch_string_list[i - 1].to_string()))
+							|| (CHINESE_PURE_NUMBER_LIST
+								.iter()
+								.any(|&x| x == ch_string_list[i + 1].to_string()))
+						{
+							ch_string_list[i] = (*value).chars().nth(0).unwrap();
+						}
 					}
-
-					}
-
 				}
-				None =>{
-
-				}
+				None => {}
 			}
-
+			// #特殊变换 俩变二
+			char_to_get = ch_string_list[i].to_string();
+			let value = special_number_char_dict.get(char_to_get.as_str());
+			// # 如果前后有单纯的数字 则进行单位转换
+			match value {
+				Some(value) => {
+					if i == 0 {
+						if CHINESE_PURE_COUNTING_UNIT_LIST
+							.iter()
+							.any(|&x| x == ch_string_list[i + 1].to_string())
+						{
+							ch_string_list[i] = (*value).chars().nth(0).unwrap();
+						}
+					} else if i == (string_length - 1) {
+						if CHINESE_PURE_COUNTING_UNIT_LIST
+							.iter()
+							.any(|&x| x == ch_string_list[i - 1].to_string())
+						{
+							ch_string_list[i] = (*value).chars().nth(0).unwrap();
+						}
+					} else {
+						if (CHINESE_PURE_COUNTING_UNIT_LIST
+							.iter()
+							.any(|&x| x == ch_string_list[i - 1].to_string()))
+							|| (CHINESE_PURE_COUNTING_UNIT_LIST
+								.iter()
+								.any(|&x| x == ch_string_list[i + 1].to_string()))
+						{
+							ch_string_list[i] = (*value).chars().nth(0).unwrap();
+						}
+					}
+				}
+				None => {}
+			}
 		}
-
 	}
-	let final_ch_string_list:String = chStringList.iter().collect();
+	let final_ch_string_list: String = ch_string_list.iter().collect();
 
-	return final_ch_string_list
+	return final_ch_string_list;
 }
 
 // """
 // 标准表述转换  三千二 变成 三千零二  三千十二变成 三千零一十二
 // """
-fn standardChNumberConvert(chNumberString:String) -> String{
-	let chNumberStringList:Vec<char> = chNumberString.chars().collect();
+fn standard_ch_number_convert(ch_number_string: String) -> String {
+	let ch_number_string_list: Vec<char> = ch_number_string.chars().collect();
 
-	let mut newChNumberStringList:String = chNumberString;
+	let mut new_ch_number_string_list: String = ch_number_string;
 
 	// #大于2的长度字符串才有检测和补位的必要
-	if chNumberStringList.len() > 2 {
+	if ch_number_string_list.len() > 2 {
 		// #十位补一：
-		let tenNumberIndex = chNumberStringList.iter().position(|&x| x=="十".chars().nth(0).unwrap());
-		match tenNumberIndex{
-			Some(tenNumberIndex) => {
-				if tenNumberIndex == 0_usize{
-					newChNumberStringList = "一".to_string() + &newChNumberStringList;
-				}else{
+		let ten_number_index = ch_number_string_list
+			.iter()
+			.position(|&x| x == "十".chars().nth(0).unwrap());
+		match ten_number_index {
+			Some(ten_number_index) => {
+				if ten_number_index == 0_usize {
+					new_ch_number_string_list = "一".to_string() + &new_ch_number_string_list;
+				} else {
 					// # 如果没有左边计数数字 插入1
-					if !(CHINESE_PURE_NUMBER_LIST.iter().any(|&x| x == chNumberStringList[(tenNumberIndex-1)].to_string().as_str())){
-
-						let tempLeftPart:String = chNumberStringList[0..tenNumberIndex].iter().collect();
-						let tempRightPart:String = chNumberStringList[tenNumberIndex..].iter().collect();
-						newChNumberStringList =  tempLeftPart + "一" + &tempRightPart;
+					if !(CHINESE_PURE_NUMBER_LIST.iter().any(|&x| {
+						x == ch_number_string_list[(ten_number_index - 1)]
+							.to_string()
+							.as_str()
+					})) {
+						let temp_left_part: String =
+							ch_number_string_list[0..ten_number_index].iter().collect();
+						let temp_right_part: String =
+							ch_number_string_list[ten_number_index..].iter().collect();
+						new_ch_number_string_list = temp_left_part + "一" + &temp_right_part;
 					}
-
 				}
-				
 			}
-			None =>{
-
-			}
+			None => {}
 		}
-		
 
 		// #差位补零
 		// #逻辑 如果最后一个单位 不是十结尾 而是百以上 则数字后面补一个比最后一个出现的单位小一级的单位
 		// #从倒数第二位开始看,且必须是倒数第二位就是单位的才符合条件
 
-		let tempNewChNumberStringList:Vec<char> = newChNumberStringList.chars().collect();
+		let temp_new_ch_number_string_list: Vec<char> = new_ch_number_string_list.chars().collect();
 
-		let lastCountingUnit = CHINESE_PURE_COUNTING_UNIT_LIST.iter().position(|&x| x==tempNewChNumberStringList[tempNewChNumberStringList.len()-2].to_string().as_str());
+		let last_counting_unit = CHINESE_PURE_COUNTING_UNIT_LIST.iter().position(|&x| {
+			x == temp_new_ch_number_string_list[temp_new_ch_number_string_list.len() - 2]
+				.to_string()
+				.as_str()
+		});
 		// # 如果最末位的是百开头
-		match lastCountingUnit{
-			Some(lastCountingUnit) =>{
-				if lastCountingUnit >= 1_usize {
+		match last_counting_unit {
+			Some(last_counting_unit) => {
+				if last_counting_unit >= 1_usize {
 					// # 则字符串最后拼接一个比最后一个单位小一位的单位 例如四万三 变成四万三千
 					// # 如果最后一位结束的是亿 则补千万
-					if lastCountingUnit == 4_usize {
-						newChNumberStringList = newChNumberStringList + &"千万".to_string();
+					if last_counting_unit == 4_usize {
+						new_ch_number_string_list = new_ch_number_string_list + &"千万".to_string();
 					} else {
-						newChNumberStringList = newChNumberStringList + &CHINESE_PURE_COUNTING_UNIT_LIST[lastCountingUnit-1].to_string();
-		
+						new_ch_number_string_list = new_ch_number_string_list
+							+ &CHINESE_PURE_COUNTING_UNIT_LIST[last_counting_unit - 1].to_string();
 					}
-		
 				}
 			}
-			None =>{
-
-			}
+			None => {}
 		}
-
-
 	}
 	//大于一的检查是不是万三，千四五这种
-	let mut perCountSwitch = false;
-	let tempNewChNumberStringList:Vec<char> = newChNumberStringList.chars().collect();
-	if tempNewChNumberStringList.len() > 1 {
+	let mut per_count_switch = false;
+	let temp_new_ch_number_string_list: Vec<char> = new_ch_number_string_list.chars().collect();
+	if temp_new_ch_number_string_list.len() > 1 {
 		// #十位补一：
 		// fistCharCheckResult := isExistItem(string(tempNewChNumberStringList[0]), []string{"千", "万", "百"})
 
-		let firstCharCheckResult = ["千", "万", "百"].iter().position(|&x| x==tempNewChNumberStringList[0].to_string().as_str());
-		match firstCharCheckResult {
-			Some(firstCharCheckResult) =>{
-				for i in 1..tempNewChNumberStringList.len(){
+		let _first_char_check_result = ["千", "万", "百"]
+			.iter()
+			.position(|&x| x == temp_new_ch_number_string_list[0].to_string().as_str());
+		match _first_char_check_result {
+			Some(_first_char_check_result) => {
+				for i in 1..temp_new_ch_number_string_list.len() {
 					// #其余位数都是纯数字 才能执行
-					if CHINESE_PURE_NUMBER_LIST.iter().any(|&x| x == tempNewChNumberStringList[i].to_string().as_str()){
-						perCountSwitch = true;
-					} else{
-						perCountSwitch = false;
+					if CHINESE_PURE_NUMBER_LIST
+						.iter()
+						.any(|&x| x == temp_new_ch_number_string_list[i].to_string().as_str())
+					{
+						per_count_switch = true;
+					} else {
+						per_count_switch = false;
 						//有一个不合适 退出循环
-						break
+						break;
 					}
 				}
-				if perCountSwitch {
-					let tempLeftPartString:String = tempNewChNumberStringList[0..1].iter().collect();
-					let tempRightPartString:String = tempNewChNumberStringList[1..].iter().collect();
-					newChNumberStringList =  tempLeftPartString + "分之" + &tempRightPartString;
+				if per_count_switch {
+					let temp_left_part_string: String =
+						temp_new_ch_number_string_list[0..1].iter().collect();
+					let temp_right_part_string: String =
+						temp_new_ch_number_string_list[1..].iter().collect();
+					new_ch_number_string_list = temp_left_part_string + "分之" + &temp_right_part_string;
 				}
-
 			}
-			None =>{
-
-			}
-		} 
+			None => {}
+		}
 	}
 
-	return newChNumberStringList
+	return new_ch_number_string_list;
 }
 
 //检查初次提取的汉字数字是正负号是否切分正确
-fn checkSignSeg(chineseNumberList:Vec<String>) -> Vec<String> {
-	let mut newChineseNumberList:Vec<String> = vec![];
-	let mut tempSign = "".to_string();
-	for i in 0..chineseNumberList.len() {
+fn check_sign_seg(chinese_number_list: &Vec<String>) -> Vec<String> {
+	let mut new_chinese_number_list: Vec<String> = vec![];
+	let mut temp_sign = "".to_string();
+	for i in 0..chinese_number_list.len() {
 		// #新字符串 需要加上上一个字符串 最后1位的判断结果
-		let forTempSign:String= tempSign;
-		let mut newChNumberString = forTempSign + &chineseNumberList[i];
-		let tempChineseNumberList:Vec<char> = newChNumberString.chars().collect();
-		if tempChineseNumberList.len() > 1 {
-			let lastString:String = tempChineseNumberList[(tempChineseNumberList.len()-1)..].iter().collect();
+		let mut new_ch_number_string = temp_sign.clone() + &chinese_number_list[i];
+		let temp_chinese_number_list: Vec<char> = new_ch_number_string.chars().collect();
+		if temp_chinese_number_list.len() > 1 {
+			let last_string: String = temp_chinese_number_list[(temp_chinese_number_list.len() - 1)..]
+				.iter()
+				.collect();
 			// #如果最后1位是百分比 那么本字符去掉最后三位  下一个数字加上最后1位
-			if CHINESE_SIGN_LIST.iter().any(|&x| x==lastString.as_str()){
-				tempSign = lastString;
+			if CHINESE_SIGN_LIST.iter().any(|&x| x == last_string.as_str()) {
+				temp_sign = last_string;
 				// #如果最后1位 是  那么截掉最后1位
-				// let tempWithoutLastPartString:String = 
-				newChNumberString = tempChineseNumberList[..(tempChineseNumberList.len()-1)].iter().collect();
+				// let tempWithoutLastPartString:String =
+				new_ch_number_string = temp_chinese_number_list[..(temp_chinese_number_list.len() - 1)]
+					.iter()
+					.collect();
 			} else {
-				tempSign = "".to_string();
+				temp_sign = "".to_string();
 			}
 		}
-		newChineseNumberList.push(newChNumberString)
+		new_chinese_number_list.push(new_ch_number_string)
 	}
-	return newChineseNumberList
+	return new_chinese_number_list;
 }
 
 struct FinalResultStruct {
-	inputText:          String,
-	replacedText:       String,
-	chNumberStringList: Vec<String>,
-	digitsStringList:  Vec<String>,
+	input_text: String,
+	replaced_text: String,
+	ch_number_string_list: Vec<String>,
+	digits_string_list: Vec<String>,
 }
 
+// static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1}){0,1}(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))|(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1})(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))"#;
+static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}
+|\.\d+(?:[\%]){0,1}){0,1}(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))
+|(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1})(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+
+	(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))"#;
 
-static takingChineseDigitsMixRERulesString:&str = r"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})\
-(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1}){0,1}\
-(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))\
-|(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1})\
-(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))";
+// static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}"#;
 
 
 // lazy_static! {
@@ -537,177 +607,159 @@ static takingChineseDigitsMixRERulesString:&str = r"(?:(?:分之){0,1}(?:\+|\-){
 // 	r"(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))").unwrap();
 // }
 
+static CHINESE_SIGN_DICT_STATIC: [(&str, &str); 4] =
+	[("负", "-"), ("正", "+"), ("-", "-"), ("+", "+")];
 
-
-
-static CHINESE_SIGN_DICT_STATIC: [(&str, &str); 4] = [("负": "-"), ("正": "+"), ("-": "-"), ("+": "+")]
+static CHINESE_CONNECTING_SIGN_STATIC: [(&str, &str); 3] = [(".", "."), ("点", "."), ("·", ".")];
 
 // ChineseToDigits 是可以识别包含百分号，正负号的函数，并控制是否将百分之10转化为0.1
-fn chineseToDigits(chineseCharsToTrans:String, percentConvert:bool) -> String{
+fn chinese_to_digits(chinese_chars_to_trans: String, percent_convert: bool) -> String {
 	// """
 	// 分之  分号切割  要注意
 	// """
-	let mut finalTotal = "".to_string();
-	let mut convertResultList:Vec<String> = vec![];
-	let mut chineseCharsListByDiv:Vec<String> = vec![];
+	let final_total:String;
+	let mut convert_result_list: Vec<String> = vec![];
+	let mut chinese_chars_list_by_div: Vec<String> = vec![];
 
-	let  chineseSignDict: HashMap<&str, &str> = CHINESE_SIGN_DICT_STATIC.into_iter().collect();
+	let chinese_sign_dict: HashMap<&str, &str> = CHINESE_SIGN_DICT_STATIC.into_iter().collect();
+	let chinese_connecting_sign_dict: HashMap<&str, &str> =
+		CHINESE_CONNECTING_SIGN_STATIC.into_iter().collect();
 
-	let dotRightPartReplaceRule:Regex = Regex::new("0+$").unwrap();
-
-	if chineseCharsToTrans.contains("分之"){
-		let tempSplitResult = chineseCharsToTrans.split("分之");
-		for s in tempSplitResult { 
-			chineseCharsListByDiv.push(s.to_string()); 
-		} 
-	}else{
-		chineseCharsListByDiv.push(chineseCharsToTrans);
+	if chinese_chars_to_trans.contains("分之") {
+		let temp_split_result: Vec<&str> = chinese_chars_to_trans.split("分之").collect();
+		for s in temp_split_result {
+			chinese_chars_list_by_div.push(s.to_string());
+		}
+	} else {
+		chinese_chars_list_by_div.push(chinese_chars_to_trans);
 	}
 
-	for k in 0..chineseCharsListByDiv.len(){
+	for k in 0..chinese_chars_list_by_div.len() {
+		let mut temp_chinese_char: String = chinese_chars_list_by_div[k].to_string();
 
-		let mut tempChineseChars:String = chineseCharsListByDiv[k];
-
-		// chineseChars := tempChineseChars
-		let chineseChars:Vec<char> = tempChineseChars.chars().collect();
+		// chinese_char := temp_chinese_char
+		let chinese_char: Vec<char> = temp_chinese_char.chars().collect();
 		// """
 		// 看有没有符号
 		// """
 		let mut sign = "".to_string();
-		for i in 0..chineseChars.len(){
-			let charToGet = chineseChars[i].to_string().as_str();
-			let value = chineseSignDict.get(charToGet.as_str());
+		let mut char_to_get:String;
+		for i in 0..chinese_char.len() {
+			char_to_get = chinese_char[i].to_string();
+			let value = chinese_sign_dict.get(char_to_get.as_str());
 			match value {
-				Some(value) =>{
-					sign = &value;
+				Some(value) => {
+					sign = value.to_string();
 					// chineseCharsToTrans = strings.Replace(chineseCharsToTrans, charToGet, "", -1)
-					tempChineseChars.replace(charToGet,"");
-
+					temp_chinese_char = temp_chinese_char.replace(&char_to_get, "");
 				}
-				None =>{
-
-				}
+				None => {}
 			}
 		}
-		// chineseChars = []rune(chineseCharsToTrans)
+		// chinese_char = []rune(chineseCharsToTrans)
 
 		// """
 		// 小数点切割，看看是不是有小数点
 		// """
-		let stringContainDot = false;
-		let leftOfDotString = "".to_string();
-		let rightOfDotString = "".to_string();
-		for key := range chineseConnectingSignDict {
-			if strings.Contains(tempChineseChars, key) {
-				chineseCharsDotSplitList := strings.Split(tempChineseChars, key)
-				leftOfDotString = string(chineseCharsDotSplitList[0])
-				rightOfDotString = string(chineseCharsDotSplitList[1])
-				stringContainDot = true
-				break
+		let mut string_contain_dot = false;
+		let mut left_of_dot_string = "".to_string();
+		let mut right_of_dot_string = "".to_string();
+		for (key, _) in &chinese_connecting_sign_dict {
+			if temp_chinese_char.contains(&key.to_string()) {
+				let chinese_chars_dot_split_list: Vec<&str> = temp_chinese_char.split(key).collect();
+				left_of_dot_string = chinese_chars_dot_split_list[0].to_string();
+				right_of_dot_string = chinese_chars_dot_split_list[1].to_string();
+				string_contain_dot = true;
+				break;
 			}
 		}
-		convertResult := ""
-		if !stringContainDot {
-			convertResult = CoreCHToDigits(tempChineseChars)
+		let mut convert_result:String;
+		if !string_contain_dot {
+			convert_result = core_ch_to_digits(temp_chinese_char);
 		} else {
-			convertResult = ""
-			tempBuf := bytes.Buffer{}
-			tempRightDigits := ""
+			// convert_result = "".to_string();
+			let mut temp_buf: String;
+			let temp_right_digits:String;
 			// #如果小数点右侧有 单位 比如 2.55万  4.3百万 的处理方式
 			// #先把小数点右侧单位去掉
-			tempCountString := ""
-			listOfRight := []rune(rightOfDotString)
-			for ii := len(listOfRight) - 1; ii >= 0; ii-- {
-				if isExistItem(string(listOfRight[ii]), CHINESE_PURE_COUNTING_UNIT_LIST) > -1 {
-					tempCountString = string(listOfRight[ii]) + tempCountString
-				} else {
-					rightOfDotString = string(listOfRight[0:(ii + 1)])
-					break
+			let mut temp_count_string = "".to_string();
+			let list_of_right: Vec<char> = right_of_dot_string.chars().collect();
+			for ii in (0..(list_of_right.len() - 1)).rev() {
+				let _find_counting_unit_index_result = CHINESE_PURE_COUNTING_UNIT_LIST
+					.iter()
+					.position(|&x| x == list_of_right[ii].to_string().as_str());
+				match _find_counting_unit_index_result {
+					Some(_find_counting_unit_index_result) => {
+						temp_count_string = list_of_right[ii].to_string() + &temp_count_string;
+					}
+					None => {
+						right_of_dot_string = list_of_right[0..(ii + 1)].iter().collect();
+						break;
+					}
 				}
 			}
 
-			tempCountNum := 1.0
-			if tempCountString != "" {
-				tempNum, errTemp := strconv.ParseFloat(CoreCHToDigits(tempCountString), 32)
-				if errTemp != nil {
-					panic(errTemp)
-				} else {
-					tempCountNum = tempNum
-				}
+			let mut temp_count_num = 1.0;
+			if temp_count_string != "" {
+				let temp_num = core_ch_to_digits(temp_count_string).parse::<f32>().unwrap();
+				temp_count_num = temp_num;
 			}
 
-			if leftOfDotString == "" {
+			if left_of_dot_string == "" {
 				// """
 				// .01234 这种开头  用0 补位
 				// """
-				tempBuf.WriteString("0.")
-				tempRightDigits = CoreCHToDigits(rightOfDotString)
-				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
-				tempBuf.WriteString(tempRightDigits)
-				convertResult = tempBuf.String()
+				temp_buf = "0.".to_string();
+				temp_right_digits = core_ch_to_digits(right_of_dot_string);
+				temp_buf = temp_buf + &temp_right_digits;
+				convert_result = temp_buf;
 			} else {
-				tempBuf.WriteString(CoreCHToDigits(leftOfDotString))
-				tempBuf.WriteString(".")
-				tempRightDigits = CoreCHToDigits(rightOfDotString)
-				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
-				tempBuf.WriteString(tempRightDigits)
-				convertResult = tempBuf.String()
+				temp_buf = core_ch_to_digits(left_of_dot_string);
+				temp_buf = temp_buf + ".";
+				temp_right_digits = core_ch_to_digits(right_of_dot_string);
+				temp_buf = temp_buf + &temp_right_digits;
+				convert_result = temp_buf;
 			}
 
-			tempStrToFloat, errTemp1 := strconv.ParseFloat(convertResult, 32)
-			if errTemp1 != nil {
-				panic(errTemp1)
-			} else {
-				convertResult = strconv.FormatFloat(tempStrToFloat*tempCountNum, 'f', -1, 32)
-			}
-
+			let temp_str_to_float = core_ch_to_digits(convert_result).parse::<f32>().unwrap();
+			convert_result = (temp_str_to_float * temp_count_num).to_string();
 		}
 		//如果转换结果为空字符串 则为百分之10 这种
-		if convertResult == "" {
-			convertResult = "1"
+		if convert_result == "" {
+			convert_result = "1".to_string();
 		}
-		convertResult = sign + convertResult
+		convert_result = sign + &convert_result;
 		// #最后在双向转换一下 防止出现 0.3000 或者 00.300的情况
 
-		newConvertResultTemp := []rune(convertResult)
-		newBuf := ""
-		if strings.HasSuffix(convertResult, ".0") {
-			newBuf = string(newConvertResultTemp[0 : len(newConvertResultTemp)-2])
+		let new_convert_result_temp: Vec<char> = convert_result.chars().collect();
+		let new_buf:String;
+		if convert_result.ends_with(".0") {
+			new_buf = new_convert_result_temp[0..new_convert_result_temp.len() - 2]
+				.iter()
+				.collect();
 		} else {
-			newBuf = convertResult
+			new_buf = convert_result;
 		}
-		convertResultList = append(convertResultList, newBuf)
-
+		convert_result_list.push(new_buf);
 	}
-	if len(convertResultList) > 1 {
+	if convert_result_list.len() > 1 {
 		// #是否转换分号及百分比
-		if percentConvert {
-			tempFloat1, err1 := strconv.ParseFloat(convertResultList[1], 32/64)
-			if err1 != nil {
-				panic(err1)
-			} else {
-				tempFloat0, err0 := strconv.ParseFloat(convertResultList[0], 32/64)
-				if err0 != nil {
-					panic(err0)
-				} else {
-					// fmt.Println(tempFloat1 / tempFloat0)
-					finalTotal = strconv.FormatFloat(tempFloat1/tempFloat0, 'f', -1, 32)
-				}
-			}
-
+		if percent_convert {
+			let temp_float1 = convert_result_list[1].parse::<f32>().unwrap();
+			let temp_float0 = convert_result_list[0].parse::<f32>().unwrap();
+			// fmt.Println(tempFloat1 / tempFloat0)
+			final_total = (temp_float1 / temp_float0).to_string();
 		} else {
-			if convertResultList[0] == "100" {
-				finalTotal = convertResultList[1] + "%"
-			} else if convertResultList[0] == "1000" {
-				finalTotal = convertResultList[1] + "‰"
+			if convert_result_list[0] == "100" {
+				final_total = convert_result_list[1].to_string() + "%"
+			} else if convert_result_list[0] == "1000" {
+				final_total = convert_result_list[1].to_string() + "‰"
 			} else {
-				finalTotal = convertResultList[1] + "/" + convertResultList[0]
+				final_total = convert_result_list[1].to_string() + "/" + &convert_result_list[0]
 			}
-
 		}
-
 	} else {
-		finalTotal = convertResultList[0]
+		final_total = convert_result_list[0].to_string()
 		//最后再转换一下 防止出现 .50 的问题  不能转换了 否则  超出精度了………… 服了  5亿的话
 		// tempFinalTotal, err3 := strconv.ParseFloat(finalTotal, 32)
 		// if err3 != nil {
@@ -717,13 +769,16 @@ fn chineseToDigits(chineseCharsToTrans:String, percentConvert:bool) -> String{
 		// }
 	}
 
-	return finalTotal
+	return final_total;
 }
 
 // TakeChineseNumberFromString 将句子中的汉子数字提取的整体函数
-fn TakeChineseNumberFromString(chTextString:String,percentConvert:bool, traditionalConvert:bool) -> FinalResultStruct {
-
-	let mut chNumberStringList:Vec<String> = vec![];
+fn take_chinese_number_from_string(
+	ch_text_string: String,
+	percent_convert: bool,
+	traditional_convert: bool,
+) -> FinalResultStruct {
+	let mut ch_number_string_list: Vec<String> = vec![];
 
 	//默认参数设置
 	// if len(opt) > 3 {
@@ -760,48 +815,50 @@ fn TakeChineseNumberFromString(chTextString:String,percentConvert:bool, traditio
 	//"""
 	// originText := chTextString
 
-
 	// let traditionalConvert = true;
-	let convertedString :String = traditionalTextConvertFunc(chTextString, traditionalConvert);
+	let converted_string: String = traditional_text_convert_func(&ch_text_string, traditional_convert);
 
 	//正则引擎
-	let mut regMatchResult:Vec<String>;
-	let takingChineseDigitsMixRERules:Regex = Regex::new(takingChineseDigitsMixRERulesString).unwrap();
-	for cap in  takingChineseDigitsMixRERules.captures_iter(convertedString.as_str()){
-		regMatchResult.push(cap[0].to_string());
+	let mut reg_match_result: Vec<String> = vec![];
+	let taking_chinese_digits_mix_re_rules: Regex =
+		Regex::new(TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING).unwrap();
+	for cap in taking_chinese_digits_mix_re_rules.captures_iter(&converted_string.as_bytes()) {
+		let caps = cap.unwrap();
+		let cap_result = str::from_utf8(&caps[0]).unwrap();
+		reg_match_result.push(cap_result.to_string());
 	}
 
-	let mut tempText = "".to_string();
-	let mut chNumberStringListTemp :Vec<String> = vec![];
-	for i in 0..regMatchResult.len(){
-		tempText = regMatchResult[i];
-		chNumberStringListTemp.push(tempText);
+	let mut temp_text: String;
+	let mut ch_number_string_list_temp: Vec<String> = vec![];
+	for i in 0..reg_match_result.len() {
+		temp_text = reg_match_result[i].to_string();
+		ch_number_string_list_temp.push(temp_text);
 	}
 
 	// ##检查是不是  分之 切割不完整问题
-	chNumberStringListTemp = check_number_seg(chNumberStringListTemp, convertedString);
+	ch_number_string_list_temp = check_number_seg(&ch_number_string_list_temp, &converted_string);
 
 	// 检查最后是正负号的问题
-	chNumberStringListTemp = checkSignSeg(chNumberStringListTemp);
+	ch_number_string_list_temp = check_sign_seg(&ch_number_string_list_temp);
 
 	// #备份一个原始的提取，后期处结果的时候显示用
-	let originCHNumberTake :Vec<String> = chNumberStringListTemp;
+	let origin_ch_number_take: Vec<String> = ch_number_string_list_temp.clone();
 
 	// #将阿拉伯数字变成汉字  不然合理性检查 以及后期 如果不是300万这种乘法  而是 四分之345  这种 就出错了
-	chNumberStringListTemp = digits_to_ch_chars(chNumberStringListTemp);
+	ch_number_string_list_temp = digits_to_ch_chars(&ch_number_string_list_temp);
 
 	//检查合理性 是否是单纯的单位  等
 	// var chNumberStringList []string
 	// var originCHNumberForOutput []string
-	let mut originCHNumberForOutput :Vec<String> =  vec![];
-	for i in  0..chNumberStringListTemp.len(){
+	let mut origin_ch_number_for_output: Vec<String> = vec![];
+	for i in 0..ch_number_string_list_temp.len() {
 		// fmt.Println(aa[i])
-		tempText = chNumberStringListTemp[i];
-		if check_chinese_number_reasonable(tempText) {
+		temp_text = ch_number_string_list_temp[i].to_string();
+		if check_chinese_number_reasonable(&temp_text) {
 			// #如果合理  则添加进被转换列表
-			chNumberStringList.push(tempText);
+			ch_number_string_list.push(temp_text);
 			// #则添加把原始提取的添加进来
-			originCHNumberForOutput.push(originCHNumberTake[i]);
+			origin_ch_number_for_output.push(origin_ch_number_take[i].to_string());
 		}
 		// CHNumberStringList = append(CHNumberStringList, regMatchResult[i][0])
 	}
@@ -809,47 +866,47 @@ fn TakeChineseNumberFromString(chTextString:String,percentConvert:bool, traditio
 	// """
 	// 进行标准汉字字符串转换 例如 二千二  转换成二千零二
 	// """
-	chNumberStringListTemp = vec![];
-	for i in 0..chNumberStringList.len(){
-		chNumberStringListTemp.push(standardChNumberConvert(chNumberStringList[i]));
-
+	ch_number_string_list_temp = vec![];
+	for i in 0..ch_number_string_list.len() {
+		ch_number_string_list_temp.push(standard_ch_number_convert(ch_number_string_list[i].to_string()));
 	}
 
 	//"""
 	//将中文转换为数字
 	//"""
-	let mut digitsStringList:Vec<String> =  vec![];
-	let mut replacedText = convertedString;
-	let mut tempCHToDigitsResult = "".to_string();
+	let mut digits_string_list: Vec<String> = vec![];
+	let mut replaced_text = converted_string;
+	let mut temp_ch_to_digits_result:String;
 	// structCHAndDigitSlice := []structCHAndDigit{}
-	if chNumberStringListTemp.len()> 0 {
-		for i in 0..chNumberStringListTemp.len(){
-			tempCHToDigitsResult = ChineseToDigits(chNumberStringListTemp[i], percentConvert);
-			digitsStringList.push(tempCHToDigitsResult);
-
+	if ch_number_string_list_temp.len() > 0 {
+		for i in 0..ch_number_string_list_temp.len() {
+			temp_ch_to_digits_result =
+				chinese_to_digits(ch_number_string_list_temp[i].to_string(), percent_convert);
+			digits_string_list.push(temp_ch_to_digits_result);
 		}
 		//fmt.Println(structCHAndDigitSlice)
 		// 按照 中文数字字符串长度 的逆序排序
-		digitsStringList.sort_by_key(|x| x.len());
-		digitsStringList.reverse();
+		digits_string_list.sort_by_key(|x| x.chars().count());
+		digits_string_list.reverse();
 		//"""
 		//按照提取出的中文数字字符串长短排序，然后替换。防止百分之二十八 ，二十八，这样的先把短的替换完了的情况
 		//"""
-		for i in 0..digitsStringList.len(){
-			replacedText = replacedText.replace(originCHNumberForOutput[i],digitsStringList[i]);
+		for i in 0..digits_string_list.len() {
+			replaced_text = replaced_text.replace(
+				&origin_ch_number_for_output[i].to_string(),
+				&digits_string_list[i].to_string(),
+			);
 			//fmt.Println(replacedText)
 		}
-
 	}
 
-	let finalResult = FinalResultStruct {
-		inputText:chTextString,
-		replacedText:replacedText,
-		chNumberStringList:originCHNumberForOutput,
-		digitsStringList:digitsStringList
+	let final_result = FinalResultStruct {
+		input_text: ch_text_string,
+		replaced_text: replaced_text.to_string(),
+		ch_number_string_list: origin_ch_number_for_output,
+		digits_string_list: digits_string_list,
 	};
-	return finalResult
-
+	return final_result;
 }
 
 // TakeNumberFromString will extract the chinese and digits number together from string. and return the convert result
@@ -857,8 +914,7 @@ fn TakeChineseNumberFromString(chTextString:String,percentConvert:bool, traditio
 // :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
 // :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
 // :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
-fn TakeNumberFromString(chTextString:String) -> FinalResultStruct{
-
+fn take_number_from_string(ch_text_string: String) -> FinalResultStruct {
 	//默认参数设置
 	// if len(opt) > 2 {
 	// 	panic("too many arguments")
@@ -885,34 +941,37 @@ fn TakeNumberFromString(chTextString:String) -> FinalResultStruct{
 	// 	percentConvert = true
 	// 	traditionalConvert = true
 	// }
-	let percentConvert = true;
-	let traditionalConvert = true;
-	let finalResult:FinalResultStruct = TakeChineseNumberFromString(chTextString, percentConvert, traditionalConvert);
-	return finalResult
+	let percent_convert = true;
+	let traditional_convert = true;
+	let final_result: FinalResultStruct =
+	take_chinese_number_from_string(ch_text_string, percent_convert, traditional_convert);
+	return final_result;
 }
 
-
 fn main() {
-    println!("{}",core_ch_to_digits("三百四十二万".to_string()));
+	println!("{}", take_number_from_string("三百四十二万".to_string()).replaced_text);
 }
 
 #[test]
 fn test_core_ch_to_digits() {
-    // do test work
+	// do test work
 	assert_eq!(core_ch_to_digits("三百四十二万".to_string()), "3420000")
 }
 #[test]
 fn test_check_number_seg() {
-    
-	let a1 = vec!["百".to_string(),"分之5".to_string(),"负千".to_string(),"分之15".to_string()];
+	let a1 = vec![
+		"百".to_string(),
+		"分之5".to_string(),
+		"负千".to_string(),
+		"分之15".to_string(),
+	];
 	let a2 = "百分之5负千分之15".to_string();
-	let a3 = vec!["百分之5".to_string(),"负千分之15".to_string()];
-	assert_eq!(check_number_seg(a1, a2), a3)
+	let a3 = vec!["百分之5".to_string(), "负千分之15".to_string()];
+	assert_eq!(check_number_seg(&a1, &a2), a3)
 }
 
 #[test]
 fn test_check_chinese_number_reasonable() {
-    
 	let a2 = "千千万万".to_string();
-	assert_eq!(check_chinese_number_reasonable(a2), false)
+	assert_eq!(check_chinese_number_reasonable(&a2), false)
 }
