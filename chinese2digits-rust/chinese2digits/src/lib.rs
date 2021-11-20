@@ -1,8 +1,9 @@
 // #[warn(unused_assignments)]
 // #[macro_use] extern crate lazy_static;
 // extern crate regex;
-extern crate pcre2;
 // use regex::Regex;
+//pcre2 速度快
+extern crate pcre2;
 use pcre2::bytes::Regex;
 use std::collections::HashMap;
 use std::str;
@@ -589,23 +590,18 @@ struct FinalResultStruct {
 	digits_string_list: Vec<String>,
 }
 
-// static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1}){0,1}(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))|(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1})(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))"#;
-static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}
-|\.\d+(?:[\%]){0,1}){0,1}(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))
-|(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1})(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+
-	(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))"#;
+// static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}
+// |\.\d+(?:[\%]){0,1}){0,1}(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))
+// |(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1})(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+
+// 	(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))"#;
+//rust  % 号不能加转义
+static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = concat!(
+	r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[%]){0,1}"#,
+	r#"|\.\d+(?:[%]){0,1}){0,1}(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})"#,
+	r#"|(?:点[一二三四五六七八九万亿兆幺零]+))))|(?:(?:\d+(?:\.\d+){0,1}(?:[%]){0,1}|\.\d+(?:[%]){0,1})"#,
+	r#"(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+"#,
+	r#"(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))"#);
 
-// static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}"#;
-
-
-// lazy_static! {
-// 	static ref init:String="".to_string();
-// 	static ref takingChineseDigitsMixRERules:Regex = Regex::new(r"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})" +
-// 	r"(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1}){0,1}" +
-// 	r"(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))" +
-// 	r"|(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1})" +
-// 	r"(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))").unwrap();
-// }
 
 static CHINESE_SIGN_DICT_STATIC: [(&str, &str); 4] =
 	[("负", "-"), ("正", "+"), ("-", "-"), ("+", "+")];
@@ -827,6 +823,9 @@ fn take_chinese_number_from_string(
 		let cap_result = str::from_utf8(&caps[0]).unwrap();
 		reg_match_result.push(cap_result.to_string());
 	}
+	// for cap in taking_chinese_digits_mix_re_rules.captures_iter(&converted_string) {
+	// 	reg_match_result.push(cap[0].to_string());
+	// }
 
 	let mut temp_text: String;
 	let mut ch_number_string_list_temp: Vec<String> = vec![];
@@ -914,7 +913,7 @@ fn take_chinese_number_from_string(
 // :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
 // :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
 // :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
-fn take_number_from_string(ch_text_string: String) -> FinalResultStruct {
+pub fn take_number_from_string(ch_text_string: String) -> FinalResultStruct {
 	//默认参数设置
 	// if len(opt) > 2 {
 	// 	panic("too many arguments")
@@ -949,7 +948,7 @@ fn take_number_from_string(ch_text_string: String) -> FinalResultStruct {
 }
 
 fn main() {
-	println!("{}", take_number_from_string("三百四十二万".to_string()).replaced_text);
+	println!("{}", take_number_from_string("四千三".to_string()).replaced_text);
 }
 
 #[test]
@@ -975,3 +974,21 @@ fn test_check_chinese_number_reasonable() {
 	let a2 = "千千万万".to_string();
 	assert_eq!(check_chinese_number_reasonable(&a2), false)
 }
+
+// #[test]
+// fn test_reg(){
+// 	let a2 = "四千三啦啦啦啦五千二".to_string();
+// 	let re = concat!(r#"(?:[一二三四五六七八九十千万亿兆幺零百]+"#,
+// 	r#"(?:点[一二三四五六七八九万亿兆幺零]+){0,1})"#);
+// 	let taking_chinese_digits_mix_re_rules: Regex =
+// 		Regex::new(re).unwrap();
+// 	// for cap in taking_chinese_digits_mix_re_rules.captures_iter(&converted_string.as_bytes()) {
+// 	// 	let caps = cap.unwrap();
+// 	// 	let cap_result = str::from_utf8(&caps[0]).unwrap();
+// 	// 	reg_match_result.push(cap_result.to_string());
+// 	// }
+// 	// for cap in taking_chinese_digits_mix_re_rules.captures_iter(&a2) {
+// 	// 	println!("{}",&cap[0]);
+// 	// }
+
+// }
