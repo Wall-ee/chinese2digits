@@ -1,10 +1,10 @@
 // #[warn(unused_assignments)]
 // #[macro_use] extern crate lazy_static;
 // extern crate regex;
-// use regex::Regex;
+use regex::Regex;
 //pcre2 速度快
-extern crate pcre2;
-use pcre2::bytes::Regex;
+// extern crate pcre2;
+// use pcre2::bytes::Regex;
 use std::collections::HashMap;
 use std::str;
 
@@ -583,11 +583,11 @@ fn check_sign_seg(chinese_number_list: &Vec<String>) -> Vec<String> {
 	return new_chinese_number_list;
 }
 
-struct FinalResultStruct {
-	input_text: String,
-	replaced_text: String,
-	ch_number_string_list: Vec<String>,
-	digits_string_list: Vec<String>,
+pub struct C2DResultStruct {
+	pub input_text: String,
+	pub replaced_text: String,
+	pub ch_number_string_list: Vec<String>,
+	pub digits_string_list: Vec<String>,
 }
 
 // static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}
@@ -770,10 +770,10 @@ fn chinese_to_digits(chinese_chars_to_trans: String, percent_convert: bool) -> S
 
 // TakeChineseNumberFromString 将句子中的汉子数字提取的整体函数
 fn take_chinese_number_from_string(
-	ch_text_string: String,
+	ch_text_string: &String,
 	percent_convert: bool,
 	traditional_convert: bool,
-) -> FinalResultStruct {
+) -> C2DResultStruct {
 	let mut ch_number_string_list: Vec<String> = vec![];
 
 	//默认参数设置
@@ -818,14 +818,54 @@ fn take_chinese_number_from_string(
 	let mut reg_match_result: Vec<String> = vec![];
 	let taking_chinese_digits_mix_re_rules: Regex =
 		Regex::new(TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING).unwrap();
-	for cap in taking_chinese_digits_mix_re_rules.captures_iter(&converted_string.as_bytes()) {
-		let caps = cap.unwrap();
-		let cap_result = str::from_utf8(&caps[0]).unwrap();
-		reg_match_result.push(cap_result.to_string());
-	}
-	// for cap in taking_chinese_digits_mix_re_rules.captures_iter(&converted_string) {
-	// 	reg_match_result.push(cap[0].to_string());
+	
+	//PCRE2 引擎，但是正则断句不对导致字符串切割总是失败。
+	// for cap in taking_chinese_digits_mix_re_rules.captures_iter(&converted_string.as_bytes()) {
+	// 	let caps = cap.unwrap();
+	// 	let cap_result = str::from_utf8(&caps[0]);
+	// 	match cap_result{
+	// 		Ok(cap_result) => {
+	// 			reg_match_result.push(cap_result.to_string());
+	// 		}
+	// 		Err(cap_result) =>{
+	// 			println!("{}",cap_result)
+	// 		}
+
+	// 	}
+
+		
 	// }
+
+	// let caps=taking_chinese_digits_mix_re_rules.captures(&converted_string.as_bytes()).unwrap();
+
+	// match caps{
+	// 	Some(caps)=>{
+	// 		for i in 0..caps.len(){
+	// 			let cap = caps.get(i).unwrap();
+	// 			let cap_result = str::from_utf8(cap.as_bytes());
+	// 			match cap_result{
+	// 				Ok(cap_result)=>{
+	// 					println!("{}",cap_result.to_string());
+	// 					reg_match_result.push(cap_result.to_string());
+	// 				}
+	// 				Err(cap_result) =>{
+	// 					println!("error is {}",cap_result);
+	// 				}
+	// 			}
+
+	// 		}
+
+
+	// 	}
+	// 	None=>{
+
+	// 	}
+	// }
+
+	// println!("Values inside vec: {:?}", reg_match_result);
+	for cap in taking_chinese_digits_mix_re_rules.captures_iter(&converted_string) {
+		reg_match_result.push(cap[0].to_string());
+	}
 
 	let mut temp_text: String;
 	let mut ch_number_string_list_temp: Vec<String> = vec![];
@@ -833,7 +873,7 @@ fn take_chinese_number_from_string(
 		temp_text = reg_match_result[i].to_string();
 		ch_number_string_list_temp.push(temp_text);
 	}
-
+	// println!("Values inside ch_number_string_list_temp: {:?}", ch_number_string_list_temp);
 	// ##检查是不是  分之 切割不完整问题
 	ch_number_string_list_temp = check_number_seg(&ch_number_string_list_temp, &converted_string);
 
@@ -876,17 +916,21 @@ fn take_chinese_number_from_string(
 	let mut digits_string_list: Vec<String> = vec![];
 	let mut replaced_text = converted_string;
 	let mut temp_ch_to_digits_result:String;
-	// structCHAndDigitSlice := []structCHAndDigit{}
 	if ch_number_string_list_temp.len() > 0 {
 		for i in 0..ch_number_string_list_temp.len() {
 			temp_ch_to_digits_result =
 				chinese_to_digits(ch_number_string_list_temp[i].to_string(), percent_convert);
 			digits_string_list.push(temp_ch_to_digits_result);
 		}
-		//fmt.Println(structCHAndDigitSlice)
 		// 按照 中文数字字符串长度 的逆序排序
+		// println!("Values inside origin digits_string_list: {:?}", digits_string_list);
 		digits_string_list.sort_by_key(|x| x.chars().count());
-		digits_string_list.reverse();
+		//自动逆序 不需要 reverse（）
+		// digits_string_list.reverse();
+		
+		// println!("Values inside digits_string_list: {:?}", digits_string_list);
+		// println!("replaced text is {}",replaced_text);
+		// println!("Values inside origin_ch_number_for_output: {:?}", origin_ch_number_for_output);
 		//"""
 		//按照提取出的中文数字字符串长短排序，然后替换。防止百分之二十八 ，二十八，这样的先把短的替换完了的情况
 		//"""
@@ -899,8 +943,8 @@ fn take_chinese_number_from_string(
 		}
 	}
 
-	let final_result = FinalResultStruct {
-		input_text: ch_text_string,
+	let final_result = C2DResultStruct {
+		input_text: ch_text_string.to_string(),
 		replaced_text: replaced_text.to_string(),
 		ch_number_string_list: origin_ch_number_for_output,
 		digits_string_list: digits_string_list,
@@ -913,7 +957,7 @@ fn take_chinese_number_from_string(
 // :param percentConvert: convert percent simple. Default is True.  3% will be 0.03 in the result
 // :param traditionalConvert: Switch to convert the Traditional Chinese character to Simplified chinese
 // :return: Dict like result. 'inputText',replacedText','CHNumberStringList':CHNumberStringList,'digitsStringList'
-pub fn take_number_from_string(ch_text_string: String) -> FinalResultStruct {
+pub fn take_number_from_string(ch_text_string: &String) -> C2DResultStruct {
 	//默认参数设置
 	// if len(opt) > 2 {
 	// 	panic("too many arguments")
@@ -942,14 +986,12 @@ pub fn take_number_from_string(ch_text_string: String) -> FinalResultStruct {
 	// }
 	let percent_convert = true;
 	let traditional_convert = true;
-	let final_result: FinalResultStruct =
+	let final_result: C2DResultStruct =
 	take_chinese_number_from_string(ch_text_string, percent_convert, traditional_convert);
 	return final_result;
 }
 
-fn main() {
-	println!("{}", take_number_from_string("四千三".to_string()).replaced_text);
-}
+
 
 #[test]
 fn test_core_ch_to_digits() {
@@ -974,21 +1016,3 @@ fn test_check_chinese_number_reasonable() {
 	let a2 = "千千万万".to_string();
 	assert_eq!(check_chinese_number_reasonable(&a2), false)
 }
-
-// #[test]
-// fn test_reg(){
-// 	let a2 = "四千三啦啦啦啦五千二".to_string();
-// 	let re = concat!(r#"(?:[一二三四五六七八九十千万亿兆幺零百]+"#,
-// 	r#"(?:点[一二三四五六七八九万亿兆幺零]+){0,1})"#);
-// 	let taking_chinese_digits_mix_re_rules: Regex =
-// 		Regex::new(re).unwrap();
-// 	// for cap in taking_chinese_digits_mix_re_rules.captures_iter(&converted_string.as_bytes()) {
-// 	// 	let caps = cap.unwrap();
-// 	// 	let cap_result = str::from_utf8(&caps[0]).unwrap();
-// 	// 	reg_match_result.push(cap_result.to_string());
-// 	// }
-// 	// for cap in taking_chinese_digits_mix_re_rules.captures_iter(&a2) {
-// 	// 	println!("{}",&cap[0]);
-// 	// }
-
-// }

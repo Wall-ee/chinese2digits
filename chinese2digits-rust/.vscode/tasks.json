@@ -5,7 +5,7 @@
 			"label": "Build",
 			"type": "shell",
 			"options":{
-				"cwd":"${workspaceRoot}"
+				"cwd":"${workspaceRoot}/chinese2digits-example"
 			},
 			"command": "cargo build"
 		}

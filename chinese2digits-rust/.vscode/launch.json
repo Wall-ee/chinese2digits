@@ -10,9 +10,10 @@
             "request": "launch",
             // "target": "./target/debug/${workspaceFolderBasename}.exe", // 注意这里使用了第五部分讲到的配置变量
             // https://zhuanlan.zhihu.com/p/92175757
-            "program":"${workspaceRoot}/target/debug/${workspaceFolderBasename}.exe",
+            // "program":"${workspaceRoot}/chinese2digits-example/target/debug/${workspaceFolderBasename}.exe",
+            "program":"${workspaceRoot}/chinese2digits-example/target/debug/chinese2digits-example.exe",
             "preLaunchTask": "Build",
-            "cwd": "${workspaceRoot}",
+            "cwd": "${workspaceRoot}/chinese2digits-example",
             // "valuesFormatting": "parseText"
         },
         {
