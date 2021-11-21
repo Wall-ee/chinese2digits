@@ -283,7 +283,7 @@ func checkNumberSeg(chineseNumberList []string, originText string) []string {
 	return newChineseNumberList
 }
 
-var dotRightPartReplaceRule, regError5 = regexp.Compile("0+$")
+// var dotRightPartReplaceRule, regError5 = regexp.Compile("0+$")
 
 // ChineseToDigits 是可以识别包含百分号，正负号的函数，并控制是否将百分之10转化为0.1
 func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
@@ -293,9 +293,9 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 	finalTotal := ""
 	var convertResultList []string
 	var chineseCharsListByDiv []string
-	if regError5 != nil {
-		panic(regError5)
-	}
+	// if regError5 != nil {
+	// 	panic(regError5)
+	// }
 
 	if strings.Contains(chineseCharsToTrans, "分之") {
 		chineseCharsListByDiv = strings.Split(chineseCharsToTrans, "分之")
@@ -377,14 +377,14 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 				// """
 				tempBuf.WriteString("0.")
 				tempRightDigits = CoreCHToDigits(rightOfDotString)
-				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
+				// tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			} else {
 				tempBuf.WriteString(CoreCHToDigits(leftOfDotString))
 				tempBuf.WriteString(".")
 				tempRightDigits = CoreCHToDigits(rightOfDotString)
-				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
+				// tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			}
@@ -449,6 +449,15 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 		// 	panic(err3)
 		// } else {
 		// 	finalTotal = strconv.FormatFloat(tempFinalTotal, 'f', -1, 32)
+		// }
+	}
+
+	//删除最后的0
+	if strings.Contains(finalTotal, ".") {
+		finalTotal = strings.TrimSuffix(finalTotal, "0")
+		finalTotal = strings.TrimSuffix(finalTotal, ".")
+		// if strings.HasSuffix(finalTotal, ".") {
+
 		// }
 	}
 

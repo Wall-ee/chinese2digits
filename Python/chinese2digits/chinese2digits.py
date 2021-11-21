@@ -187,11 +187,11 @@ def chineseToDigits(chineseDigitsMixString,percentConvert = True,*args,**kwargs)
 
         convertResult = sign + convertResult
 
-        #处理小数点右边的0
-        if '.' in convertResult:
-            convertResult = convertResult.rstrip('0')
-            if convertResult.endswith('.'):
-                convertResult = convertResult.rstrip('.')
+        # #处理小数点右边的0
+        # if '.' in convertResult:
+        #     convertResult = convertResult.rstrip('0')
+        #     if convertResult.endswith('.'):
+        #         convertResult = convertResult.rstrip('.')
         convertResultList.append(convertResult)
     if len(convertResultList)>1:
         #是否转换分号及百分比
@@ -208,6 +208,12 @@ def chineseToDigits(chineseDigitsMixString,percentConvert = True,*args,**kwargs)
                 finalTotal = convertResultList[1]+'/' + convertResultList[0]
     else:
         finalTotal = convertResultList[0]
+    # 处理小数点右边的0
+    if '.' in finalTotal:
+        finalTotal = finalTotal.rstrip('0')
+        finalTotal = finalTotal.rstrip('.')
+        # if finalTotal.endswith('.'):
+        #     finalTotal = finalTotal.rstrip('.')
     return finalTotal
 
 
