@@ -610,9 +610,9 @@ pub struct C2DResultStruct {
 // 	(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))"#;
 //rust  % 号不能加转义
 static TAKING_CHINESE_DIGITS_MIX_RE_RULES_STRING: &str = concat!(
-	r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[%]){0,1}"#,
-	r#"|\.\d+(?:[%]){0,1}){0,1}(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})"#,
-	r#"|(?:点[一二三四五六七八九万亿兆幺零]+))))|(?:(?:\d+(?:\.\d+){0,1}(?:[%]){0,1}|\.\d+(?:[%]){0,1})"#,
+	r#"(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})(?:(?:(?:\d+(?:\.\d+){0,1}(?:[%‰‱]){0,1}"#,
+	r#"|\.\d+(?:[%‰‱]){0,1}){0,1}(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})"#,
+	r#"|(?:点[一二三四五六七八九万亿兆幺零]+))))|(?:(?:\d+(?:\.\d+){0,1}(?:[%‰‱]){0,1}|\.\d+(?:[%‰‱]){0,1})"#,
 	r#"(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+"#,
 	r#"(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))"#
 );
@@ -792,7 +792,40 @@ fn chinese_to_digits(chinese_chars_to_trans: String, percent_convert: bool) -> S
 	return final_total;
 }
 
-// TakeChineseNumberFromString 将句子中的汉子数字提取的整体函数
+// 将句子中的汉子数字提取的整体函数
+/// Will extract the chinese and digits number together from string. and return the convert result
+/// 
+/// Returns `C2DResultStruct`  data struct
+/// ```
+/// pub struct C2DResultStruct {
+///		pub input_text: String,
+///		pub replaced_text: String,
+///		pub ch_number_string_list: Vec<String>,
+///		pub digits_string_list: Vec<String>,
+/// }
+/// ```
+///
+///
+/// [`chText`]: chinese string
+/// 
+/// [`percentConvert`]: convert percent simple. Default is True.  3% will be 0.03 in the result
+/// 
+/// [`traditionalConvert`]: Switch to convert the Traditional Chinese character to Simplified chinese
+/// 
+/// # Examples
+///
+/// Basic usage:
+///
+/// ```
+/// use chinese2digits::take_number_from_string;
+/// 
+/// let string_example = "百分之5负千分之15".to_string();
+/// let test_result = take_number_from_string(&string_example, true, true);
+/// assert_eq!(test_result.replaced_text, "0.05-0.015");
+///	assert_eq!(test_result.ch_number_string_list, vec!["百分之5", "负千分之15"]);
+///	assert_eq!(test_result.digits_string_list, vec!["0.05", "-0.015"]);
+/// ```
+/// 
 fn take_chinese_number_from_string(
 	ch_text_string: &str,
 	percent_convert: bool,
