@@ -1,0 +1,39 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Auto",
+            "type": "cppvsdbg",  // 使用Native Debug插件提供的gdb类型
+            "request": "launch",
+            // "target": "./target/debug/${workspaceFolderBasename}.exe", // 注意这里使用了第五部分讲到的配置变量
+            // https://zhuanlan.zhihu.com/p/92175757
+            // "program":"${workspaceRoot}/chinese2digits-example/target/debug/${workspaceFolderBasename}.exe",
+            "program":"${workspaceRoot}/chinese2digits-example/target/debug/chinese2digits-example.exe",
+            "preLaunchTask": "Build",
+            "cwd": "${workspaceRoot}/chinese2digits-example",
+            // "valuesFormatting": "parseText"
+        },
+        {
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/target/debug/chinese2digits-rust.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": true
+        },
+        {
+            "name": "(OSX) Launch",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/target/debug/chinese2digits-rust.exe",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+        }
+    ]
+}

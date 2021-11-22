@@ -1,0 +1,20 @@
+[package]
+name = "chinese2digits"
+version = "1.0.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+keywords = ["chinese", "digits","nlp","number","extract"]
+description = "The Best Tool of Chinese Number to Digits. A useful tool in NLP and robot project. "
+homepage = "https://github.com/Wall-ee/chinese2digits"
+documentation = "https://github.com/Wall-ee/chinese2digits/README.MD"
+repository = "https://github.com/Wall-ee/chinese2digits"
+readme = "README.MD"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+regex = "1"
+rust_decimal = "1"
+# pcre2 = "*"
+# lazy_static = "1.4"

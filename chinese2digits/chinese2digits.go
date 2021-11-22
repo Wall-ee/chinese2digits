@@ -16,28 +16,26 @@ import (
 	"strings"
 )
 
-var chineseCountingString = map[string]int{"十": 10, "百": 100, "千": 1000, "万": 10000, "亿": 100000000, "拾": 10,
-	"佰": 100, "仟": 1000}
-
 // 中文转阿拉伯数字
 var chineseCharNumberDict = map[string]int{"幺": 1, "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5,
 	"六": 6, "七": 7, "八": 8, "九": 9, "十": 10, "百": 100,
 	"千": 1000, "万": 10000, "亿": 100000000, "壹": 1, "贰": 2, "叁": 3, "肆": 4, "伍": 5, "陆": 6, "柒": 7, "捌": 8, "玖": 9, "拾": 10,
 	"佰": 100, "仟": 1000}
-var chinesePercentString = "百分之"
+
+// var chinesePercentString = "百分之"
 var chineseSignDict = map[string]string{"负": "-", "正": "+", "-": "-", "+": "+"}
 var chineseConnectingSignDict = map[string]string{".": ".", "点": ".", "·": "."}
 
-var chinesePureNumberList = map[string]int{"幺": 1, "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
+// var chinesePureNumberList = map[string]int{"幺": 1, "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
 
 // """
 // 阿拉伯数字转中文
 // """
 var digitsCharChineseDict = map[string]string{"0": "零", "1": "一", "2": "二", "3": "三", "4": "四", "5": "五", "6": "六", "7": "七", "8": "八", "9": "九", "%": "百分之", "‰": "千分之", "‱": "万分之", ".": "点"}
 
-var takingChineseNumberRERules, regError1 = regexp.Compile(`(?:(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))` +
-	`(?:(?:分之)(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
-	`(?:点[一二三四五六七八九幺零]+))){0,1}`)
+// var takingChineseNumberRERules, regError1 = regexp.Compile(`(?:(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+)))` +
+// `(?:(?:分之)(?:[正负]){0,1}(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|` +
+// `(?:点[一二三四五六七八九幺零]+))){0,1}`)
 
 //数字汉字混合提取的正则引擎
 
@@ -47,13 +45,13 @@ var takingChineseNumberRERules, regError1 = regexp.Compile(`(?:(?:[正负]){0,1}
 //go 语言没有 ‰\‱  会报错
 var takingChineseDigitsMixRERules, regError2 = regexp.Compile(`(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})` +
 	`(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1}){0,1}` +
-	`(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))))` +
+	`(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))` +
 	`|(?:(?:\d+(?:\.\d+){0,1}(?:[\%]){0,1}|\.\d+(?:[\%]){0,1})` +
-	`(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九幺零]+){0,1})|(?:点[一二三四五六七八九幺零]+))){0,1}))`)
+	`(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))`)
 
-var PURE_DIGITS_RE, regError3 = regexp.Compile(`[0-9]`)
+var PURE_DIGITS_RE, _ = regexp.Compile(`[0-9]`)
 
-var takingDigitsRERule, regError4 = regexp.Compile(`(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}`)
+// var takingDigitsRERule, _ = regexp.Compile(`(?:\+|\-){0,1}\d+(?:\.\d+){0,1}(?:\%){0,1}|(?:\+|\-){0,1}\.\d+(?:\%){0,1}`)
 
 func checkChineseNumberReasonable(chNumber string) bool {
 	if len(chNumber) > 0 {
@@ -89,7 +87,7 @@ func maxValueInArray(arrayToCalc []int) int {
 }
 
 // CoreCHToDigits 是核心转化函数
-func CoreCHToDigits(chineseCharsToTrans string, dotPosition int) string {
+func CoreCHToDigits(chineseCharsToTrans string) string {
 	chineseChars := []rune(chineseCharsToTrans)
 	total := ""
 	tempVal := ""                      //#用以记录临时是否建议数字拼接的字符串 例如 三零万 的三零
@@ -99,53 +97,39 @@ func CoreCHToDigits(chineseCharsToTrans string, dotPosition int) string {
 	tempTotal := 0
 	// countingUnit := 1
 	// 表示单位：个十百千...
-	if dotPosition == 0 {
-		//如果是小数点左边 正常执行 考虑各种单位等等
-		for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
-			charToGet := string(chineseChars[i])
-			val, _ := chineseCharNumberDict[charToGet]
-			if (val >= 10) && (i == 0) {
-				// 应对 十三 十四 十*之类
-				if val > countingUnit {
-					countingUnit = val
-					tempTotal = tempTotal + val
-					countingUnitFromString = append(countingUnitFromString, val)
-				} else {
-					countingUnitFromString = append(countingUnitFromString, val)
-					// countingUnit = countingUnit * val
-					countingUnit = maxValueInArray(countingUnitFromString) * val
-				}
-			} else if val >= 10 {
-				if val > countingUnit {
-					countingUnit = val
-					countingUnitFromString = append(countingUnitFromString, val)
-				} else {
-					// countingUnit = countingUnit * val
-					countingUnitFromString = append(countingUnitFromString, val)
-					countingUnit = maxValueInArray(countingUnitFromString) * val
-				}
+	for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
+		charToGet := string(chineseChars[i])
+		val := chineseCharNumberDict[charToGet]
+		if (val >= 10) && (i == 0) {
+			// 应对 十三 十四 十*之类
+			if val > countingUnit {
+				countingUnit = val
+				tempTotal = tempTotal + val
+				countingUnitFromString = append(countingUnitFromString, val)
 			} else {
-				if i > 0 {
-					// #如果下一个不是单位 则本次也是拼接
-					preValTemp, _ := chineseCharNumberDict[string(chineseChars[i-1])]
-					if preValTemp < 10 {
-						tempVal = strconv.Itoa(val) + tempVal
-					} else {
-						// #说明已经有大于10的单位插入 要数学计算了
-						// #先拼接再计算
-						// #如果取值不大于10 说明是0-9 则继续取值 直到取到最近一个大于10 的单位   应对这种30万20千 这样子
-						tempValInt, err := strconv.Atoi(strconv.Itoa(val) + tempVal)
-						if err != nil {
-							panic(err)
-						} else {
-							tempTotal = tempTotal + countingUnit*tempValInt
-						}
-						// #计算后 把临时字符串置位空
-						tempVal = ""
-					}
-
+				countingUnitFromString = append(countingUnitFromString, val)
+				// countingUnit = countingUnit * val
+				countingUnit = maxValueInArray(countingUnitFromString) * val
+			}
+		} else if val >= 10 {
+			if val > countingUnit {
+				countingUnit = val
+				countingUnitFromString = append(countingUnitFromString, val)
+			} else {
+				// countingUnit = countingUnit * val
+				countingUnitFromString = append(countingUnitFromString, val)
+				countingUnit = maxValueInArray(countingUnitFromString) * val
+			}
+		} else {
+			if i > 0 {
+				// #如果下一个不是单位 则本次也是拼接
+				preValTemp := chineseCharNumberDict[string(chineseChars[i-1])]
+				if preValTemp < 10 {
+					tempVal = strconv.Itoa(val) + tempVal
 				} else {
-					// #那就是无论如何要收尾了
+					// #说明已经有大于10的单位插入 要数学计算了
+					// #先拼接再计算
+					// #如果取值不大于10 说明是0-9 则继续取值 直到取到最近一个大于10 的单位   应对这种30万20千 这样子
 					tempValInt, err := strconv.Atoi(strconv.Itoa(val) + tempVal)
 					if err != nil {
 						panic(err)
@@ -156,68 +140,80 @@ func CoreCHToDigits(chineseCharsToTrans string, dotPosition int) string {
 					tempVal = ""
 				}
 
-			}
-			//如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
-			if (tempTotal == 0) && (countingUnit) > 10 {
-				// 转化为字符串
-				total = strconv.Itoa(countingUnit)
-
 			} else {
-				// 转化为字符串
+				// #那就是无论如何要收尾了
+				//如果counting unit 等于1  说明所有字符串都是直接拼接的，不用计算，不然会丢失前半部分的零
+				if countingUnit == 1 {
+					tempVal = strconv.Itoa(val) + tempVal
+				} else {
+					tempValInt, err := strconv.Atoi(strconv.Itoa(val) + tempVal)
+					if err != nil {
+						panic(err)
+					} else {
+						tempTotal = tempTotal + countingUnit*tempValInt
+					}
+				}
+			}
+
+		}
+
+	}
+
+	//如果 total 为0  但是 countingUnit 不为0  说明结果是 十万这种  最终直接取结果 十万
+	if tempTotal == 0 {
+		if countingUnit > 10 {
+			// 转化为字符串
+			total = strconv.Itoa(countingUnit)
+		} else {
+			//counting Unit 为1  且tempval 不为空 说明是没有单位的纯数字拼接
+			if tempVal != "" {
+				total = tempVal
+			} else {
 				total = strconv.Itoa(tempTotal)
 			}
 		}
 	} else {
-		//小数点右边，便捷执行，考虑 零零五六这种情况
-		for i := len(chineseChars) - 1; i >= 0; i = i - 1 {
-			charToGet := string(chineseChars[i])
-			val, _ := chineseCharNumberDict[charToGet]
-			total = strconv.Itoa(val) + total
-		}
-	}
-	newTotalTemp := []rune(total)
-	newTotal := ""
-	if strings.HasSuffix(total, ".0") {
-		newTotal = string((newTotalTemp[0 : len(newTotalTemp)-2]))
-	} else {
-		newTotal = total
-	}
-	return newTotal
-}
+		// 转化为字符串
+		total = strconv.Itoa(tempTotal)
 
-func convertDigitsStringToFloat(digitsString string) float64 {
-	perCountingString := ""
-	convertResult := digitsString
-	for i := 0; i < len(CHINESE_PER_COUNTING_STRING_LIST); i++ {
-		if strings.Contains(digitsString, CHINESE_PER_COUNTING_STRING_LIST[i]) {
-			value, exists := CHINESE_PER_COUNTING_DICT[string(CHINESE_PER_COUNTING_STRING_LIST[i])]
-			if exists {
-				perCountingString = value
-			} else {
-				perCountingString = ""
-			}
-			convertResult = strings.Replace(digitsString, CHINESE_PER_COUNTING_STRING_LIST[i], "", -1)
-		}
 	}
 
-	var finalTotal float64
-	floatResult, err := strconv.ParseFloat(convertResult, 32)
-	if err != nil {
-		panic(err)
-	} else {
-		switch perCountingString {
-		case "%":
-			finalTotal = floatResult / 100
-		case "‰":
-			finalTotal = floatResult / 1000
-		case "‱":
-			finalTotal = floatResult / 10000
-		default:
-			finalTotal = floatResult
-		}
-	}
-	return finalTotal
+	return total
 }
+
+// func convertDigitsStringToFloat(digitsString string) float64 {
+// 	perCountingString := ""
+// 	convertResult := digitsString
+// 	for i := 0; i < len(CHINESE_PER_COUNTING_STRING_LIST); i++ {
+// 		if strings.Contains(digitsString, CHINESE_PER_COUNTING_STRING_LIST[i]) {
+// 			value, exists := CHINESE_PER_COUNTING_DICT[string(CHINESE_PER_COUNTING_STRING_LIST[i])]
+// 			if exists {
+// 				perCountingString = value
+// 			} else {
+// 				perCountingString = ""
+// 			}
+// 			convertResult = strings.Replace(digitsString, CHINESE_PER_COUNTING_STRING_LIST[i], "", -1)
+// 		}
+// 	}
+
+// 	var finalTotal float64
+// 	floatResult, err := strconv.ParseFloat(convertResult, 32)
+// 	if err != nil {
+// 		panic(err)
+// 	} else {
+// 		switch perCountingString {
+// 		case "%":
+// 			finalTotal = floatResult / 100
+// 		case "‰":
+// 			finalTotal = floatResult / 1000
+// 		case "‱":
+// 			finalTotal = floatResult / 10000
+// 		default:
+// 			finalTotal = floatResult
+// 		}
+// 	}
+// 	return finalTotal
+// }
 
 //汉字切分是否正确  分之 切分
 func checkNumberSeg(chineseNumberList []string, originText string) []string {
@@ -287,7 +283,7 @@ func checkNumberSeg(chineseNumberList []string, originText string) []string {
 	return newChineseNumberList
 }
 
-var dotRightPartReplaceRule, regError5 = regexp.Compile("0+$")
+// var dotRightPartReplaceRule, regError5 = regexp.Compile("0+$")
 
 // ChineseToDigits 是可以识别包含百分号，正负号的函数，并控制是否将百分之10转化为0.1
 func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
@@ -297,9 +293,9 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 	finalTotal := ""
 	var convertResultList []string
 	var chineseCharsListByDiv []string
-	if regError5 != nil {
-		panic(regError5)
-	}
+	// if regError5 != nil {
+	// 	panic(regError5)
+	// }
 
 	if strings.Contains(chineseCharsToTrans, "分之") {
 		chineseCharsListByDiv = strings.Split(chineseCharsToTrans, "分之")
@@ -347,7 +343,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 		}
 		convertResult := ""
 		if !stringContainDot {
-			convertResult = CoreCHToDigits(tempChineseChars, 0)
+			convertResult = CoreCHToDigits(tempChineseChars)
 		} else {
 			convertResult = ""
 			tempBuf := bytes.Buffer{}
@@ -357,7 +353,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 			tempCountString := ""
 			listOfRight := []rune(rightOfDotString)
 			for ii := len(listOfRight) - 1; ii >= 0; ii-- {
-				if isExistItem(string(listOfRight[ii]), []string{"千", "万", "百"}) > -1 {
+				if isExistItem(string(listOfRight[ii]), CHINESE_PURE_COUNTING_UNIT_LIST) > -1 {
 					tempCountString = string(listOfRight[ii]) + tempCountString
 				} else {
 					rightOfDotString = string(listOfRight[0:(ii + 1)])
@@ -367,7 +363,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 
 			tempCountNum := 1.0
 			if tempCountString != "" {
-				tempNum, errTemp := strconv.ParseFloat(CoreCHToDigits(tempCountString, 0), 32/64)
+				tempNum, errTemp := strconv.ParseFloat(CoreCHToDigits(tempCountString), 32)
 				if errTemp != nil {
 					panic(errTemp)
 				} else {
@@ -380,20 +376,20 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 				// .01234 这种开头  用0 补位
 				// """
 				tempBuf.WriteString("0.")
-				tempRightDigits = CoreCHToDigits(rightOfDotString, 1)
-				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
+				tempRightDigits = CoreCHToDigits(rightOfDotString)
+				// tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			} else {
-				tempBuf.WriteString(CoreCHToDigits(leftOfDotString, 0))
+				tempBuf.WriteString(CoreCHToDigits(leftOfDotString))
 				tempBuf.WriteString(".")
-				tempRightDigits = CoreCHToDigits(rightOfDotString, 1)
-				tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
+				tempRightDigits = CoreCHToDigits(rightOfDotString)
+				// tempRightDigits = dotRightPartReplaceRule.ReplaceAllString(tempRightDigits, "")
 				tempBuf.WriteString(tempRightDigits)
 				convertResult = tempBuf.String()
 			}
 
-			tempStrToFloat, errTemp1 := strconv.ParseFloat(convertResult, 32/64)
+			tempStrToFloat, errTemp1 := strconv.ParseFloat(convertResult, 32)
 			if errTemp1 != nil {
 				panic(errTemp1)
 			} else {
@@ -420,7 +416,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 	}
 	if len(convertResultList) > 1 {
 		// #是否转换分号及百分比
-		if percentConvert == true {
+		if percentConvert {
 			tempFloat1, err1 := strconv.ParseFloat(convertResultList[1], 32/64)
 			if err1 != nil {
 				panic(err1)
@@ -429,6 +425,7 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 				if err0 != nil {
 					panic(err0)
 				} else {
+					// fmt.Println(tempFloat1 / tempFloat0)
 					finalTotal = strconv.FormatFloat(tempFloat1/tempFloat0, 'f', -1, 32)
 				}
 			}
@@ -452,6 +449,15 @@ func ChineseToDigits(chineseCharsToTrans string, percentConvert bool) string {
 		// 	panic(err3)
 		// } else {
 		// 	finalTotal = strconv.FormatFloat(tempFinalTotal, 'f', -1, 32)
+		// }
+	}
+
+	//删除最后的0
+	if strings.Contains(finalTotal, ".") {
+		finalTotal = strings.TrimSuffix(finalTotal, "0")
+		finalTotal = strings.TrimSuffix(finalTotal, ".")
+		// if strings.HasSuffix(finalTotal, ".") {
+
 		// }
 	}
 
@@ -538,7 +544,7 @@ func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) stri
 	chStringList := []rune(chString)
 	stringLength := len(chStringList)
 	charToGet := ""
-	if simplifConvertSwitch == true {
+	if simplifConvertSwitch {
 		for i := 0; i < stringLength; i++ {
 			// #繁体中文数字转简体中文数字
 			charToGet = string(chStringList[i])
@@ -549,50 +555,52 @@ func traditionalTextConvertFunc(chString string, simplifConvertSwitch bool) stri
 		}
 
 	}
+	if stringLength > 1 {
+		// #检查繁体单体转换
+		for i := 0; i < stringLength; i++ {
+			// #如果 前后有 pure 汉字数字 则转换单位为简体
+			charToGet = string(chStringList[i])
+			value, exists := SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT[charToGet]
+			// # 如果前后有单纯的数字 则进行单位转换
+			if exists {
+				switch i {
+				case 0:
+					if isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				case stringLength - 1:
+					if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				default:
+					if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 ||
+						isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				}
+			}
+			// #特殊变换 俩变二
+			charToGet = string(chStringList[i])
+			value, exists = SPECIAL_NUMBER_CHAR_DICT[charToGet]
+			// # 如果前后有单纯的数字 则进行单位转换
+			if exists {
+				switch i {
+				case 0:
+					if isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				case stringLength - 1:
+					if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				default:
+					if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 ||
+						isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
+						chStringList[i] = []rune(value)[0]
+					}
+				}
+			}
 
-	// #检查繁体单体转换
-	for i := 0; i < stringLength; i++ {
-		// #如果 前后有 pure 汉字数字 则转换单位为简体
-		charToGet = string(chStringList[i])
-		value, exists := SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT[charToGet]
-		// # 如果前后有单纯的数字 则进行单位转换
-		if exists {
-			switch i {
-			case 0:
-				if isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-					chStringList[i] = []rune(value)[0]
-				}
-			case stringLength - 1:
-				if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-					chStringList[i] = []rune(value)[0]
-				}
-			default:
-				if isExistItem(string(chStringList[i-1]), CHINESE_PURE_NUMBER_LIST) != -1 ||
-					isExistItem(string(chStringList[i+1]), CHINESE_PURE_NUMBER_LIST) != -1 {
-					chStringList[i] = []rune(value)[0]
-				}
-			}
-		}
-		// #特殊变换 俩变二
-		charToGet = string(chStringList[i])
-		value, exists = SPECIAL_NUMBER_CHAR_DICT[charToGet]
-		// # 如果前后有单纯的数字 则进行单位转换
-		if exists {
-			switch i {
-			case 0:
-				if isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-					chStringList[i] = []rune(value)[0]
-				}
-			case stringLength - 1:
-				if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-					chStringList[i] = []rune(value)[0]
-				}
-			default:
-				if isExistItem(string(chStringList[i-1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 ||
-					isExistItem(string(chStringList[i+1]), CHINESE_PURE_COUNTING_UNIT_LIST) != -1 {
-					chStringList[i] = []rune(value)[0]
-				}
-			}
 		}
 
 	}
@@ -657,7 +665,7 @@ func standardChNumberConvert(chNumberString string) string {
 					break
 				}
 			}
-			if perCountSwitch == true {
+			if perCountSwitch {
 				newChNumberStringList = string(tempNewChNumberStringList[:1]) + "分之" + string(tempNewChNumberStringList[1:])
 			}
 		}
@@ -760,7 +768,8 @@ func TakeChineseNumberFromString(chTextString string, opt ...interface{}) interf
 
 	//检查合理性 是否是单纯的单位  等
 	// var CHNumberStringList []string
-	var OriginCHNumberForOutput []string
+	// var OriginCHNumberForOutput []string
+	OriginCHNumberForOutput := []string{}
 	for i := 0; i < len(CHNumberStringListTemp); i++ {
 		// fmt.Println(aa[i])
 		tempText = CHNumberStringListTemp[i]

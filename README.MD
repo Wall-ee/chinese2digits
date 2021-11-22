@@ -101,9 +101,44 @@ func main() {
 
 ```
 
+## Rust 语言代码示例
+## Rust Example
+
+### 安装
+### Setup
+
+添加如下代码到
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+chinese2digits = "1"
+```
+
+### 使用
+### Usage
+``` rust
+
+use chinese2digits::take_number_from_string;
+
+//混合提取
+let string_example = "百分之5负千分之15".to_string();
+//第二个开关为 百分比转换开关，是否把百分号转换为小鼠  第三个开关为繁体转简体强制开关，是否强制转换
+let test_result = take_number_from_string(&string_example, true, true);
+assert_eq!(test_result.replaced_text, "0.05-0.015");
+assert_eq!(test_result.ch_number_string_list, vec!["百分之5", "负千分之15"]);
+assert_eq!(test_result.digits_string_list, vec!["0.05", "-0.015"]);
+
+```
+
 
 ## 更新时间
 ## Update Time
+>2021-11-22
+* RUST 版本上线！！
+* 重大优化:重构一些核心算法，提升计算效率
+
 >2021-11-10
 * 修复小数点右边出现零零三四的情况，可以正确转换 三百十四点零零三四  为 340.0034
 * 增加单元测试用例
@@ -166,6 +201,7 @@ func main() {
 - [x] 数字汉字混合模式:300万
 - [x] 将所有汉字数字与罗马数字提取
 - [x] 新增方法 takeNumberFromString，一次性地将所有罗马，中文，罗马中文混合数字全部提取
+- [x] RUST 版本上线
 
 > 好用记得Fork and Star。
 >

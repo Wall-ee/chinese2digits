@@ -3,3 +3,9 @@
 .idea/encodings.xml
 .idea/misc.xml
 .idea/modules.xml
+.idea/inspectionProfiles/profiles_settings.xml
+chinese2digits-rust/target
+chinese2digits-rust/chinese2digits/target
+chinese2digits-rust/chinese2digits-example/target
+/chinese2digits-rust/chinese2digits/Cargo.lock
+/chinese2digits-rust/chinese2digits-example/Cargo.lock
