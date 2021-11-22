@@ -1,6 +1,6 @@
 [package]
 name = "chinese2digits"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 keywords = ["chinese", "digits","nlp","number","extract"]
@@ -14,7 +14,7 @@ readme = "README.MD"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-regex = "*"
-rust_decimal = "*"
+regex = "1"
+rust_decimal = "1"
 # pcre2 = "*"
 # lazy_static = "1.4"

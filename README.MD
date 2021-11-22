@@ -113,7 +113,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-chinese2digits = "*"
+chinese2digits = "1"
 ```
 
 ### 使用
