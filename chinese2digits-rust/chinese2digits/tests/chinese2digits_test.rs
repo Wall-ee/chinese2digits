@@ -3,13 +3,14 @@
 #[cfg(test)]
 mod tests {
     // 注意这个惯用法：在 tests 模块中，从外部作用域导入所有名字。
-    use super::*;
+    // use super::*;
+    // 直接在根目录 使用 cargo test 即可
     #[test]
     fn test_take_number_from_string() {
         // let aaa Vec[Vec[String]] = vec![["百分之5", "负千分之15"]];
         // Vec<[usize,&str, bool,&str,Vec<&str>,Vec<&str>]:17>
 
-        let test_example: [(usize, &str, bool, &str, Vec<&str>, Vec<&str>); 17] = [
+        let test_example: [(usize, &str, bool, &str, Vec<&str>, Vec<&str>); 18] = [
             (
                 0,
                 "百分之5负千分之15",
@@ -139,6 +140,14 @@ mod tests {
                 "10000000000000000000000000000000000000000000连",
                 vec!["10000000000000000000000000000000000000000000"],
                 vec!["10000000000000000000000000000000000000000000"],
+            ),
+            (
+                17,
+                "一兆韦德二〇二三",
+                true,
+                "1兆韦德2023",
+                vec!["一", "二零二三"],
+                vec!["1", "2023"],
             ),
         ];
 

@@ -16,7 +16,7 @@ CHINESE_COUNTING_STRING = {'十':10, '百':100, '千':1000, '万':10000, '亿':1
 CHINESE_PURE_COUNTING_UNIT_LIST = ['十','百','千','万','亿']
 
 TRADITIONAl_CONVERT_DICT = {'壹': '一', '贰': '二', '叁': '三', '肆': '四', '伍': '五', '陆': '六', '柒': '七',
-                           '捌': '八', '玖': '九'}
+                           '捌': '八', '玖': '九','〇':'零'}
 SPECIAL_TRADITIONAl_COUNTING_UNIT_CHAR_DICT = {'拾': '十', '佰': '百', '仟':'千', '萬':'万', '億':'亿'}
 
 SPECIAL_NUMBER_CHAR_DICT = {'两':'二','俩':'二'}
@@ -24,7 +24,7 @@ SPECIAL_NUMBER_CHAR_DICT = {'两':'二','俩':'二'}
 """
 中文转阿拉伯数字
 """
-common_used_ch_numerals = {'幺':1,'零':0, '一':1, '二':2, '两':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9, '十':10, '百':100, '千':1000, '万':10000, '亿':100000000}
+common_used_ch_numerals = {'幺':1,'零':0, '一':1, '二':2, '两':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9, '十':10, '百':100, '千':1000, '万':10000,'亿':100000000}
 
 """
 阿拉伯数字转中文
@@ -39,9 +39,9 @@ digits_char_ch_dict = {'0':'零','1':'一','2':'二','3':'三','4':'四','5':'�
 
 takingChineseDigitsMixRERules = re.compile(r'(?:(?:分之){0,1}(?:\+|\-){0,1}[正负]{0,1})'
                                             r'(?:(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|\.\d+(?:[\%\‰\‱]){0,1}){0,1}'
-                                            r'(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))))'
+                                            r'(?:(?:(?:[一二三四五六七八九十千万亿幺零百]+(?:点[一二三四五六七八九万亿幺零]+){0,1})|(?:点[一二三四五六七八九万亿幺零]+))))'
                                             r'|(?:(?:\d+(?:\.\d+){0,1}(?:[\%\‰\‱]){0,1}|\.\d+(?:[\%\‰\‱]){0,1})'
-                                            r'(?:(?:(?:[一二三四五六七八九十千万亿兆幺零百]+(?:点[一二三四五六七八九万亿兆幺零]+){0,1})|(?:点[一二三四五六七八九万亿兆幺零]+))){0,1}))')
+                                            r'(?:(?:(?:[一二三四五六七八九十千万亿幺零百]+(?:点[一二三四五六七八九万亿幺零]+){0,1})|(?:点[一二三四五六七八九万亿幺零]+))){0,1}))')
 
 PURE_DIGITS_RE = re.compile('[0-9]')
 
@@ -529,9 +529,9 @@ def takeChineseNumberFromString(chText,percentConvert = True,traditionalConvert=
         'inputText':chText,
         'replacedText':replacedText,
         'CHNumberStringList':OriginCHNumberForOutput,
-        'digitsStringList':digitsStringList,
-        'errorWordList': errorCharList,
-        'errorMsgList': errorMsgList
+        'digitsStringList':digitsStringList
+        # 'errorWordList': errorCharList,
+        # 'errorMsgList': errorMsgList
     }
     return finalResult
 
@@ -583,6 +583,7 @@ if __name__=='__main__':
     print(takeNumberFromString('拾'))
 
     print(takeNumberFromString('12.55万'))
+    print(takeNumberFromString('一兆韦德二〇二三哦哦一百03'))
 
     #混合提取
     print(takeNumberFromString('三零万二零千拉阿拉啦啦30万20千嚯嚯或百四嚯嚯嚯四百三十二分之2345啦啦啦啦',percentConvert=False))
