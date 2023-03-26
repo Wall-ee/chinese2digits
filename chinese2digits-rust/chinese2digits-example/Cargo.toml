@@ -1,0 +1,9 @@
+[package]
+name = "chinese2digits-example"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chinese2digits = {path = "../chinese2digits"}
